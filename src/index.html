@@ -1,0 +1,251 @@
+<!-- src/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Account Manager</title>
+    <style>
+        .container { padding: 20px; }
+        .section { margin-bottom: 20px; }
+        .site-list, .account-list {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        .form-group { margin: 10px 0; }
+        .execution-mode { display: none; }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <!-- 사이트 선택 섹션 -->
+        <div id="siteSelection" class="section">
+            <h2>타겟 사이트 선택</h2>
+            <div id="siteList" class="site-list"></div>
+        </div>
+
+        <!-- 계정 관리 섹션 -->
+        <div id="accountManagement" class="section" style="display: none;">
+            <h2>계정 관리</h2>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="사용자명">
+                <input type="password" id="password" placeholder="비밀번호">
+                <button onclick="saveAccount()">계정 추가</button>
+            </div>
+            <div id="accountList" class="account-list"></div>
+            <button onclick="startExecution()">선택된 계정으로 실행</button>
+            <button onclick="showSiteSelection()">사이트 목록으로 돌아가기</button>
+        </div>
+
+        <!-- 실행 모드 섹션 -->
+        <div id="executionMode" class="execution-mode">
+            <h2>실행 모드</h2>
+            <div class="batch-execution-form">
+                <div class="section-group">
+                    <h3>티켓팅 정보</h3>
+                    <div class="form-group">
+                        <label for="targetUrl">대상 URL:</label>
+                        <input type="text" id="targetUrl" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="targetDate">티켓팅 날짜:</label>
+                        <input type="date" id="targetDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="targetTime">티켓팅 시간:</label>
+                        <select id="targetTime">
+                            <!-- 시간은 30분 단위로 제공 -->
+                            <option value="">선택하세요</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section-group">
+                    <h3>실행 예약</h3>
+                    <div class="form-group">
+                        <label for="executionDateTime">예약 일시:</label>
+                        <input type="datetime-local" id="executionDateTime" step="1">
+                    </div>
+                    <div class="current-time">
+                        현재 시간: <span id="currentTime"></span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="scheduleBatchExecution()" class="primary-button">일괄 실행 예약</button>
+                    <button onclick="returnToMain()" class="secondary-button">메인 화면으로 돌아가기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        let currentSiteId = null;
+
+        // 사이트 목록 로드
+        async function loadSites() {
+            const sites = await ipcRenderer.invoke('get-target-sites');
+            const siteList = document.getElementById('siteList');
+            siteList.innerHTML = '';
+
+            sites.forEach(site => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <h3>${site.name}</h3>
+                    <button onclick="selectSite('${site.id}')">계정 관리</button>
+                `;
+                siteList.appendChild(div);
+            });
+        }
+
+        // 사이트 선택
+        async function selectSite(siteId) {
+            currentSiteId = siteId;
+            document.getElementById('siteSelection').style.display = 'none';
+            document.getElementById('accountManagement').style.display = 'block';
+            await loadAccounts();
+        }
+
+        // 계정 저장
+        async function saveAccount() {
+            const account = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            };
+            
+            await ipcRenderer.invoke('save-account', { 
+                siteId: currentSiteId, 
+                account 
+            });
+            await loadAccounts();
+        }
+
+        // 계정 목록 로드
+        async function loadAccounts() {
+            const accounts = await ipcRenderer.invoke('get-accounts', currentSiteId);
+            const accountList = document.getElementById('accountList');
+            accountList.innerHTML = '';
+
+            accounts.forEach((account, index) => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <input type="checkbox" id="account-${index}">
+                    <label for="account-${index}">${account.username}</label>
+                `;
+                accountList.appendChild(div);
+            });
+        }
+
+        // 실행 모드 시작
+        async function startExecution() {
+            const sites = await ipcRenderer.invoke('get-target-sites');
+            const site = sites.find(s => s.id === currentSiteId);
+            const accounts = await ipcRenderer.invoke('get-accounts', currentSiteId);
+            
+            const selectedAccounts = accounts.filter((_, index) => 
+                document.getElementById(`account-${index}`).checked
+            );
+
+            document.getElementById('accountManagement').style.display = 'none';
+            document.getElementById('executionMode').style.display = 'block';
+
+            await ipcRenderer.invoke('start-execution', { site, selectedAccounts });
+        }
+
+        // 메인 화면으로 복귀
+        async function returnToMain() {
+            await ipcRenderer.invoke('return-to-main');
+            document.getElementById('executionMode').style.display = 'none';
+            document.getElementById('siteSelection').style.display = 'block';
+        }
+
+        function showSiteSelection() {
+            document.getElementById('accountManagement').style.display = 'none';
+            document.getElementById('siteSelection').style.display = 'block';
+        }
+
+        function initializeTimeOptions() {
+            const timeSelect = document.getElementById('targetTime');
+            for(let hour = 0; hour < 24; hour++) {
+                for(let minute of ['00', '30']) {
+                    const timeValue = `${hour.toString().padStart(2, '0')}:${minute}`;
+                    const option = new Option(timeValue, timeValue);
+                    timeSelect.add(option);
+                }
+            }
+        }
+        function updateCurrentTime() {
+            const currentTimeElement = document.getElementById('currentTime');
+            const now = new Date();
+            currentTimeElement.textContent = now.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        }
+        async function scheduleBatchExecution() {
+            const targetUrl = document.getElementById('targetUrl').value;
+            const targetDate = document.getElementById('targetDate').value;
+            const targetTime = document.getElementById('targetTime').value;
+            const executionDateTime = document.getElementById('executionDateTime').value;
+            
+            if (!targetUrl || !targetDate || !targetTime || !executionDateTime) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            let executionTimestamp = new Date(executionDateTime).getTime();
+            const now = new Date().getTime();
+            
+            if (executionTimestamp <= now) {
+                executionTimestamp = now;
+            }
+
+            try {
+                await ipcRenderer.invoke('schedule-batch-execution', {
+                    executionTime: executionDateTime,
+                    params: {
+                        url: targetUrl,
+                        date: targetDate,
+                        time: targetTime
+                    }
+                });
+                
+                alert(`일괄 실행이 예약되었습니다.\n\n` +
+                    `티켓팅 정보:\n날짜: ${targetDate}\n시간: ${targetTime}\n\n` +
+                    `실행 예약 시간: ${new Date(executionDateTime).toLocaleString('ko-KR')}`);
+            } catch (error) {
+                alert('실행 예약 중 오류가 발생했습니다.');
+                console.error(error);
+            }
+        }
+        function initializeDateTimeInputs() {
+            const now = new Date();
+            
+            // 티켓팅 날짜 기본값 설정 (오늘)
+            const targetDateInput = document.getElementById('targetDate');
+            targetDateInput.min = now.toISOString().split('T')[0];
+            targetDateInput.value = now.toISOString().split('T')[0];
+            
+            // 실행 예약 시간 최소값을 현재 시간으로 설정
+            const executionDateTimeInput = document.getElementById('executionDateTime');
+            executionDateTimeInput.min = now.toISOString().slice(0, 16);
+            
+            // 기본값을 1분 후로 설정
+            now.setMinutes(now.getMinutes() + 1);
+            executionDateTimeInput.value = now.toISOString().slice(0, 19);
+        }
+
+        // 페이지 로드 시 초기화
+        initializeTimeOptions();
+        initializeDateTimeInputs();
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000); // 1초마다 현재 시간 업데이트
+        loadSites();
+    </script>
+</body>
+</html>

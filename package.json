@@ -1,0 +1,20 @@
+{
+  "name": "account-manager",
+  "version": "1.0.0",
+  "description": "Account Manager Desktop App",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --debug"
+  },
+  "dependencies": {
+    "electron": "^29.4.6",
+    "electron-store": "^8.2.0",
+    "puppeteer": "^22.15.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
