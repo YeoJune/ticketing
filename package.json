@@ -2,7 +2,7 @@
   "name": "ticketing-macro",
   "version": "1.0.0",
   "description": "Ticketing Macro Application",
-  "main": "src/main.js",
+  "main": "src/main/index.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --debug",
@@ -12,9 +12,6 @@
   "dependencies": {
     "electron-store": "^8.2.0",
     "puppeteer": "^22.15.0",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "tesseract.js": "^5.1.1",
     "electron-log": "^5.1.1"
   },
   "devDependencies": {
@@ -25,8 +22,7 @@
     "appId": "com.ticketingmacro.app",
     "productName": "Ticketing Macro",
     "directories": {
-      "output": "dist",
-      "buildResources": "build"
+      "output": "dist"
     },
     "files": [
       "src/**/*",
@@ -47,14 +43,8 @@
         "filter": ["**/*"]
       }
     ],
-    "asar": true,
-    "asarUnpack": [
-      "node_modules/puppeteer/**/*",
-      "node_modules/puppeteer-extra/**/*",
-      "node_modules/puppeteer-extra-plugin-stealth/**/*"
-    ]
+    "asar": true
   },
-  "keywords": ["ticketing", "macro", "automation"],
   "author": "",
   "license": "ISC"
 }

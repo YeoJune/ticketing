@@ -1,0 +1,49 @@
+<!-- renderer/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>티켓팅 매니저</title>
+    <style>
+        .view { display: none; }
+        #siteView { display: block; }
+        .site-item, .account-item {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <!-- 사이트 선택 화면 -->
+    <div id="siteView" class="view">
+        <h2>사이트 선택</h2>
+        <div id="siteList"></div>
+    </div>
+
+    <!-- 계정 관리 화면 -->
+    <div id="accountView" class="view">
+        <h2>계정 관리</h2>
+        <form id="accountForm">
+            <input type="text" id="username" placeholder="아이디" required>
+            <input type="password" id="password" placeholder="비밀번호" required>
+            <button type="submit">계정 추가</button>
+        </form>
+        <div id="accountList"></div>
+        <button onclick="app.startExecution()">실행하기</button>
+    </div>
+
+    <!-- 실행 화면 -->
+    <div id="executionView" class="view">
+        <h2>실행 설정</h2>
+        <form id="executionForm">
+            <input type="text" id="targetUrl" placeholder="티켓팅 URL" required>
+            <input type="text" id="targetDate" required>
+            <input type="text" id="targetTime" required>
+            <input type="datetime-local" id="executionTime" required>
+            <button type="submit">예약하기</button>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
