@@ -1,251 +1,188 @@
-<!-- src/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <title>Account Manager</title>
-    <style>
-        .container { padding: 20px; }
-        .section { margin-bottom: 20px; }
-        .site-list, .account-list {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-        .form-group { margin: 10px 0; }
-        .execution-mode { display: none; }
-    </style>
+    <title>티켓팅 매니저</title>
+    <meta charset="UTF-8">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="app" class="container">
+    <div id="app" class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 진행 상태 표시 -->
+        <div class="stepper">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-label">사이트 선택</div>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-label">계정 관리</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-label">실행 설정</div>
+            </div>
+        </div>
+
         <!-- 사이트 선택 섹션 -->
-        <div id="siteSelection" class="section">
-            <h2>타겟 사이트 선택</h2>
-            <div id="siteList" class="site-list"></div>
+        <div id="siteSelection" class="card">
+            <h2 class="text-2xl font-semibold mb-6">티켓팅 사이트 선택</h2>
+            <div id="siteList" class="grid gap-4">
+                <!-- 사이트 카드들이 여기에 동적으로 추가됨 -->
+            </div>
         </div>
 
         <!-- 계정 관리 섹션 -->
-        <div id="accountManagement" class="section" style="display: none;">
-            <h2>계정 관리</h2>
-            <div class="form-group">
-                <input type="text" id="username" placeholder="사용자명">
-                <input type="password" id="password" placeholder="비밀번호">
-                <button onclick="saveAccount()">계정 추가</button>
+        <div id="accountManagement" class="card" style="display: none;">
+            <h2 class="text-2xl font-semibold mb-6">계정 관리</h2>
+            
+            <!-- 계정 추가/수정 폼 -->
+            <form id="accountForm" class="mb-6">
+                <input type="hidden" id="editingIndex" value="">
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="아이디" class="input-field mb-2" required>
+                    <input type="password" id="password" placeholder="비밀번호" class="input-field" required>
+                    <div class="flex justify-between mt-4">
+                        <button type="submit" id="saveAccountBtn" class="btn-primary">계정 추가</button>
+                        <button type="button" id="cancelEditBtn" class="btn-secondary" style="display: none;">수정 취소</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- 계정 목록 헤더 -->
+            <div class="flex items-center mb-4">
+                <div class="flex-1">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="selectAllAccounts" class="mr-2">
+                        <span class="text-sm font-medium">전체 선택</span>
+                    </label>
+                </div>
+                <button id="deleteSelectedBtn" class="btn-secondary text-sm" style="display: none;">
+                    선택 삭제
+                </button>
             </div>
-            <div id="accountList" class="account-list"></div>
-            <button onclick="startExecution()">선택된 계정으로 실행</button>
-            <button onclick="showSiteSelection()">사이트 목록으로 돌아가기</button>
+
+            <!-- 계정 목록 -->
+            <div id="accountList" class="mt-6">
+                <!-- 계정들이 동적으로 추가됨 -->
+            </div>
+
+            <!-- 네비게이션 버튼 -->
+            <div class="flex justify-between mt-6">
+                <button onclick="showSiteSelection()" class="btn-secondary">이전 단계</button>
+                <button onclick="startExecution()" class="btn-primary">다음 단계</button>
+            </div>
         </div>
 
         <!-- 실행 모드 섹션 -->
-        <div id="executionMode" class="execution-mode">
-            <h2>실행 모드</h2>
-            <div class="batch-execution-form">
-                <div class="section-group">
-                    <h3>티켓팅 정보</h3>
-                    <div class="form-group">
-                        <label for="targetUrl">대상 URL:</label>
-                        <input type="text" id="targetUrl" placeholder="https://...">
-                    </div>
-                    <div class="form-group">
-                        <label for="targetDate">티켓팅 날짜:</label>
-                        <input type="date" id="targetDate">
-                    </div>
-                    <div class="form-group">
-                        <label for="targetTime">티켓팅 시간:</label>
-                        <select id="targetTime">
-                            <!-- 시간은 30분 단위로 제공 -->
-                            <option value="">선택하세요</option>
-                        </select>
-                    </div>
+        <div id="executionMode" class="card" style="display: none;">
+            <h2 class="text-2xl font-semibold mb-6">실행 설정</h2>
+            
+            <!-- 로그인 진행 상황 -->
+            <div id="loginProgress" class="bg-gray-50 rounded-lg p-4 mb-6" style="display: none;">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-700">로그인 진행 상황</h3>
+                    <span id="progressText" class="text-sm text-gray-600">0 / 0</span>
                 </div>
-
-                <div class="section-group">
-                    <h3>실행 예약</h3>
-                    <div class="form-group">
-                        <label for="executionDateTime">예약 일시:</label>
-                        <input type="datetime-local" id="executionDateTime" step="1">
-                    </div>
-                    <div class="current-time">
-                        현재 시간: <span id="currentTime"></span>
-                    </div>
+                <div class="bg-gray-200 rounded-full h-2 overflow-hidden mb-2">
+                    <div id="progressBar" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
                 </div>
-
-                <div class="button-group">
-                    <button onclick="scheduleBatchExecution()" class="primary-button">일괄 실행 예약</button>
-                    <button onclick="returnToMain()" class="secondary-button">메인 화면으로 돌아가기</button>
+                <div class="flex flex-wrap gap-2" id="accountStatus">
+                    <!-- 계정 상태 뱃지들이 여기에 추가됨 -->
                 </div>
+                <div id="recentStatus" class="mt-2 text-sm text-gray-600"></div>
             </div>
+
+            <!-- 실행 설정 폼 -->
+            <form id="executionForm" class="space-y-6">
+                <!-- URL 입력 -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">티켓팅 URL</label>
+                    <input type="text" 
+                           id="targetUrl" 
+                           class="input-field" 
+                           placeholder="URL을 입력하세요"
+                           required>
+                </div>
+
+                <!-- 날짜/시간 선택 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- 날짜 선택 -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">티켓팅 날짜</label>
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   id="targetDateText" 
+                                   class="input-field" 
+                                   placeholder="YYYY-MM-DD"
+                                   pattern="\d{4}-\d{2}-\d{2}"
+                                   title="YYYY-MM-DD 형식으로 입력하세요">
+                            <input type="date" 
+                                   id="targetDate" 
+                                   class="input-field w-1/2"
+                                   style="display: none;">
+                            <button type="button" 
+                                    id="toggleDateInput" 
+                                    class="btn-secondary px-3"
+                                    onclick="toggleDateInputType()">달력</button>
+                        </div>
+                    </div>
+
+                    <!-- 시간 선택 -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">티켓팅 시간</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" 
+                                   id="targetTime" 
+                                   class="input-field" 
+                                   placeholder="HH:MM"
+                                   pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
+                                   title="HH:MM 형식으로 입력하세요 (예: 14:30)">
+                        </div>
+                        <div class="text-xs text-gray-500">24시간 형식으로 입력 (예: 14:30)</div>
+                    </div>
+                </div>
+
+                <!-- 실행 예약 시간 -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">실행 예약 시간</label>
+                    <div class="flex space-x-4">
+                        <button type="button" class="btn-secondary" onclick="setExecutionTime(-10)">10초 전</button>
+                        <button type="button" class="btn-secondary" onclick="setExecutionTime(-30)">30초 전</button>
+                        <button type="button" class="btn-secondary" onclick="setExecutionTime(-60)">1분 전</button>
+                        <button type="button" class="btn-secondary" onclick="setExecutionTime(-300)">5분 전</button>
+                    </div>
+                    <div class="flex space-x-2 mt-2">
+                        <input type="text" 
+                               id="executionDateTime" 
+                               class="input-field" 
+                               placeholder="YYYY-MM-DD HH:MM:SS">
+                        <button type="button" 
+                                class="btn-secondary" 
+                                onclick="useCurrentTime()">현재</button>
+                    </div>
+                </div>
+
+                <!-- 현재 시간 표시 -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div class="text-center text-sm text-blue-800">
+                        <span class="font-medium">현재 시간: </span>
+                        <span id="currentTime" class="font-mono"></span>
+                    </div>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="flex justify-between pt-4">
+                    <button type="button" onclick="returnToAccountManagement()" class="btn-secondary">
+                        이전 단계
+                    </button>
+                    <div class="space-x-2">
+                        <button type="submit" class="btn-primary">실행 예약</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-
-    <script>
-        const { ipcRenderer } = require('electron');
-        let currentSiteId = null;
-
-        // 사이트 목록 로드
-        async function loadSites() {
-            const sites = await ipcRenderer.invoke('get-target-sites');
-            const siteList = document.getElementById('siteList');
-            siteList.innerHTML = '';
-
-            sites.forEach(site => {
-                const div = document.createElement('div');
-                div.innerHTML = `
-                    <h3>${site.name}</h3>
-                    <button onclick="selectSite('${site.id}')">계정 관리</button>
-                `;
-                siteList.appendChild(div);
-            });
-        }
-
-        // 사이트 선택
-        async function selectSite(siteId) {
-            currentSiteId = siteId;
-            document.getElementById('siteSelection').style.display = 'none';
-            document.getElementById('accountManagement').style.display = 'block';
-            await loadAccounts();
-        }
-
-        // 계정 저장
-        async function saveAccount() {
-            const account = {
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value
-            };
-            
-            await ipcRenderer.invoke('save-account', { 
-                siteId: currentSiteId, 
-                account 
-            });
-            await loadAccounts();
-        }
-
-        // 계정 목록 로드
-        async function loadAccounts() {
-            const accounts = await ipcRenderer.invoke('get-accounts', currentSiteId);
-            const accountList = document.getElementById('accountList');
-            accountList.innerHTML = '';
-
-            accounts.forEach((account, index) => {
-                const div = document.createElement('div');
-                div.innerHTML = `
-                    <input type="checkbox" id="account-${index}">
-                    <label for="account-${index}">${account.username}</label>
-                `;
-                accountList.appendChild(div);
-            });
-        }
-
-        // 실행 모드 시작
-        async function startExecution() {
-            const sites = await ipcRenderer.invoke('get-target-sites');
-            const site = sites.find(s => s.id === currentSiteId);
-            const accounts = await ipcRenderer.invoke('get-accounts', currentSiteId);
-            
-            const selectedAccounts = accounts.filter((_, index) => 
-                document.getElementById(`account-${index}`).checked
-            );
-
-            document.getElementById('accountManagement').style.display = 'none';
-            document.getElementById('executionMode').style.display = 'block';
-
-            await ipcRenderer.invoke('start-execution', { site, selectedAccounts });
-        }
-
-        // 메인 화면으로 복귀
-        async function returnToMain() {
-            await ipcRenderer.invoke('return-to-main');
-            document.getElementById('executionMode').style.display = 'none';
-            document.getElementById('siteSelection').style.display = 'block';
-        }
-
-        function showSiteSelection() {
-            document.getElementById('accountManagement').style.display = 'none';
-            document.getElementById('siteSelection').style.display = 'block';
-        }
-
-        function initializeTimeOptions() {
-            const timeSelect = document.getElementById('targetTime');
-            for(let hour = 0; hour < 24; hour++) {
-                for(let minute of ['00', '30']) {
-                    const timeValue = `${hour.toString().padStart(2, '0')}:${minute}`;
-                    const option = new Option(timeValue, timeValue);
-                    timeSelect.add(option);
-                }
-            }
-        }
-        function updateCurrentTime() {
-            const currentTimeElement = document.getElementById('currentTime');
-            const now = new Date();
-            currentTimeElement.textContent = now.toLocaleString('ko-KR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-        }
-        async function scheduleBatchExecution() {
-            const targetUrl = document.getElementById('targetUrl').value;
-            const targetDate = document.getElementById('targetDate').value;
-            const targetTime = document.getElementById('targetTime').value;
-            const executionDateTime = document.getElementById('executionDateTime').value;
-            
-            if (!targetUrl || !targetDate || !targetTime || !executionDateTime) {
-                alert('모든 필드를 입력해주세요.');
-                return;
-            }
-
-            let executionTimestamp = new Date(executionDateTime).getTime();
-            const now = new Date().getTime();
-            
-            if (executionTimestamp <= now) {
-                executionTimestamp = now;
-            }
-
-            try {
-                await ipcRenderer.invoke('schedule-batch-execution', {
-                    executionTime: executionDateTime,
-                    params: {
-                        url: targetUrl,
-                        date: targetDate,
-                        time: targetTime
-                    }
-                });
-                
-                alert(`일괄 실행이 예약되었습니다.\n\n` +
-                    `티켓팅 정보:\n날짜: ${targetDate}\n시간: ${targetTime}\n\n` +
-                    `실행 예약 시간: ${new Date(executionDateTime).toLocaleString('ko-KR')}`);
-            } catch (error) {
-                alert('실행 예약 중 오류가 발생했습니다.');
-                console.error(error);
-            }
-        }
-        function initializeDateTimeInputs() {
-            const now = new Date();
-            
-            // 티켓팅 날짜 기본값 설정 (오늘)
-            const targetDateInput = document.getElementById('targetDate');
-            targetDateInput.min = now.toISOString().split('T')[0];
-            targetDateInput.value = now.toISOString().split('T')[0];
-            
-            // 실행 예약 시간 최소값을 현재 시간으로 설정
-            const executionDateTimeInput = document.getElementById('executionDateTime');
-            executionDateTimeInput.min = now.toISOString().slice(0, 16);
-            
-            // 기본값을 1분 후로 설정
-            now.setMinutes(now.getMinutes() + 1);
-            executionDateTimeInput.value = now.toISOString().slice(0, 19);
-        }
-
-        // 페이지 로드 시 초기화
-        initializeTimeOptions();
-        initializeDateTimeInputs();
-        updateCurrentTime();
-        setInterval(updateCurrentTime, 1000); // 1초마다 현재 시간 업데이트
-        loadSites();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
