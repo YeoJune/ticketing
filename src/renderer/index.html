@@ -4,14 +4,11 @@
 <head>
     <title>티켓팅 매니저</title>
     <style>
-        .view { display: none; }
-        #siteView { display: block; }
-        .site-item, .account-item {
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
+        #siteView {
+            display: block;
         }
     </style>
+    <link rel="stylesheet" href="./styles/styles.css">
 </head>
 <body>
     <!-- 사이트 선택 화면 -->
@@ -33,13 +30,44 @@
     </div>
 
     <!-- 실행 화면 -->
+     
     <div id="executionView" class="view">
         <h2>실행 설정</h2>
         <form id="executionForm">
-            <input type="text" id="targetUrl" placeholder="티켓팅 URL" required>
-            <input type="text" id="targetDate" required>
-            <input type="text" id="targetTime" required>
-            <input type="datetime-local" id="executionTime" required>
+            <div class="form-group">
+                <input type="text" id="targetUrl" placeholder="티켓팅 URL" required>
+            </div>
+            
+            <div class="form-group">
+                <input type="text" id="targetDate" placeholder="예매 날짜 (예: 2024-12-20)" required>
+                <div class="input-hint">YYYY-MM-DD 형식으로 입력해주세요</div>
+            </div>
+            
+            <div class="form-group">
+                <input type="text" id="targetTime" placeholder="예매 시작 시각 (예: 20:00)" required>
+                <div class="input-hint">HH:mm 형식으로 입력해주세요</div>
+            </div>
+            
+            <div class="form-group">
+                <select id="grade">
+                    <option value="">좌석 등급 선택 (선택사항)</option>
+                    <option value="VIP">VIP</option>
+                    <option value="R">R</option>
+                    <option value="S">S</option>
+                    <option value="A">A</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <input type="number" id="floor" placeholder="층 선택 (선택사항)" min="1" max="5">
+                <div class="input-hint">1층~5층 사이의 숫자를 입력해주세요</div>
+            </div>
+            
+            <div class="form-group">
+                <input type="datetime-local" id="executionTime" required>
+                <div class="input-hint">매크로 실행 시작 시각을 선택해주세요</div>
+            </div>
+            
             <button type="submit">예약하기</button>
         </form>
     </div>

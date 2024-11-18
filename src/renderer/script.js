@@ -4,6 +4,7 @@ class App {
         this.sites = [];
         this.accounts = [];
         this.currentSite = null;
+        this.showView('siteView');
         this.setupEventListeners();
         this.loadSites();
     }
@@ -83,16 +84,18 @@ class App {
         const params = {
             url: document.getElementById('targetUrl').value,
             date: document.getElementById('targetDate').value,
-            time: document.getElementById('targetTime').value
+            time: document.getElementById('targetTime').value,
+            grade: document.getElementById('grade').value || null,
+            floor: document.getElementById('floor').value || null
         };
         const executionTime = document.getElementById('executionTime').value;
-
+    
         await window.api.scheduleTicketing({
             siteId: this.currentSite,
             params,
             time: executionTime
         });
-
+    
         alert('예약이 완료되었습니다.');
     }
 
