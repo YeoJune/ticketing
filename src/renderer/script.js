@@ -104,6 +104,8 @@ class App {
         if (viewId === 'siteView') {
             this.currentSite = null;
             this.accounts = [];
+        } else if (viewId === 'accountView') {
+            window.api.closeBrowsers();
         }
         
         // 화면 전환

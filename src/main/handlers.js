@@ -1,5 +1,5 @@
 // handlers.js
-function setupHandlers(browserManager, storeManager, { sites, ticketingFunctions }) {
+function setupHandlers(browserManager, storeManager, { sites, ticketingFunctions, loginFunctions }) {
     return {
         'get-sites': () => {
             return Object.values(sites).map(site => ({
@@ -21,10 +21,12 @@ function setupHandlers(browserManager, storeManager, { sites, ticketingFunctions
         'start-execution': async ({ siteId, accounts }) => {
             for (const [index, account] of accounts.entries()) {
                 const { page } = await browserManager.createBrowser(index);
-                await browserManager.login(page, sites[siteId], account);
+                loginFunctions[siteId](page, sites[siteId], account);
             }
         },
-        
+        'close-browsers': async () => {
+            await browserManager.closeAll();
+        },
         'schedule-ticketing': async ({ siteId, params, time }) => {
             const delay = new Date(time) - new Date();
             setTimeout(() => {

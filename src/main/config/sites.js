@@ -71,77 +71,81 @@ const ticketingFunctions = {
             await page.waitForSelector('iframe[name="ifrmSeatFrame"]');
             const frame = await (await page.$('iframe[name="ifrmSeatFrame"]')).contentFrame();
             await frame.waitForSelector('div[title]');
-            await frame.evaluate((params) => {
-                // 좌석들의 거리 계산 및 정렬을 위한 배열 생성
-                const top = document.querySelector('.bx_top');
-                const topRect = top.getBoundingClientRect();
-                const topCenterX = topRect.left + (topRect.width / 2);
-                const topCenterY = topRect.top + (topRect.height / 2);
-                
-                // 좌석과 거리 정보를 저장할 배열
-                const seatsWithDistances = [];
-                
-                // 모든 좌석의 거리 계산
-                for (const seat of document.querySelectorAll(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[title${params.floor ? '^="' + params.floor + '"' : ''}]`)) {
-                    const rect = seat.getBoundingClientRect();
-                    const seatCenterX = rect.left + (rect.width / 2);
-                    const seatCenterY = rect.top + (rect.height / 2);
-                    
-                    const deltaX = topCenterX - seatCenterX;
-                    const deltaY = topCenterY - seatCenterY;
-                    const distance = deltaX * deltaX + deltaY * deltaY;
-                    
-                    seatsWithDistances.push({ seat, distance });
+            const areaCount = (await frame.$$('map[name="maphall"] area'))?.length || 1;
+            let seatsWithDistances = [];
+            for (let i = 0; i < areaCount; i++) {
+                if (i != 0) {
+                    frame.evaluate((i) => {
+                        ChangeBlock(i);
+                    }, i);
                 }
-                
-                // 거리순으로 정렬
-                seatsWithDistances.sort((a, b) => a.distance - b.distance);
-                
-                // 상위 10% 좌석 수 계산 (최소 1개)
-                const topPercentage = 0.1; // 10%
-                const topCount = Math.max(1, Math.ceil(seatsWithDistances.length * topPercentage));
-                
-                // 상위 10% 중에서 랜덤 선택
-                const randomIndex = Math.floor(Math.random() * topCount);
-                const selectedSeat = seatsWithDistances[randomIndex].seat;
-                
+                await frame.waitForSelector('.bx_top');
+                const [topCenterX, topCenterY] = await frame.$eval('.bx_top', (el) => {
+                    const rect = el.getBoundingClientRect()
+                    return [rect.left + (rect.width / 2), rect.top + (rect.height / 2)];
+                });
+                await frame.waitForSelector('div[title]');
+                const res = await frame.evaluate((params, topCenterX, topCenterY) => {
+                    const res = [];
+                    const seats = document.querySelectorAll(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[title${params.floor ? '^="' + params.floor + '"' : ''}]`);
+                    for (const seat of seats) {
+                        if (seat) {
+                            const rect = seat.getBoundingClientRect();
+                            const seatCenterX = rect.left + (rect.width / 2);
+                            const seatCenterY = rect.top + (rect.height / 2);
+                            
+                            const deltaX = topCenterX - seatCenterX;
+                            const deltaY = topCenterY - seatCenterY;
+                            
+                            res.push({ title: seat.title, distance: deltaX * deltaX + deltaY * deltaY });
+                        }
+                    }
+                    return res;
+                }, params, topCenterX, topCenterY);
+                if (res && res.length) {
+                    seatsWithDistances = res;
+                    break;
+                }
+            }
+            
+            // 거리순으로 정렬
+            seatsWithDistances.sort((a, b) => a.distance - b.distance);
+            // 상위 5% 좌석 수 계산 (최소 1개)
+            const topPercentage = 0.05; // 5%
+            const topCount = Math.max(1, Math.ceil(seatsWithDistances.length * topPercentage));
+            // 상위 5% 중에서 랜덤 선택
+            const randomIndex = Math.floor(Math.random() * topCount);
+            const selectedSeatTitle = seatsWithDistances[randomIndex].title;
+            
+            frame.evaluate((selectedSeatTitle) => {
                 // 선택된 좌석 클릭
-                selectedSeat.click();
+                document.querySelector(`div[title="${selectedSeatTitle}"]`).click();
                 ChoiceEnd();
-                
-                // 디버깅을 위한 정보 반환 (필요시 사용)
-                return {
-                    totalSeats: seatsWithDistances.length,
-                    topSeatsCount: topCount,
-                    selectedIndex: randomIndex,
-                    selectedDistance: Math.sqrt(seatsWithDistances[randomIndex].distance)
-                };
-            }, params);
-            await page.waitForSelector('#spanPromotionSeat input');
-            await page.click('#spanPromotionSeat input');
-            await sleep(500);
+            }, selectedSeatTitle);
 
+            await page.waitForSelector('#spanPromotionSeat input[value]');
             // 프로모션 처리
             await page.evaluate(() => {
                 fdc_PromotionEnd();
             });
-            await sleep(1000);
+            await Promise.all([
+                page.waitForSelector('#rdoDeliveryBase[value]'),
+                page.waitForSelector('#LUAddr_UserName[value]'),
+            ]);
             await page.evaluate(() => {
                 fdc_DeliveryEnd();
             });
-            await page.waitForSelector('#rdoPays2');
-            await sleep(500);
-            
+            await Promise.all([
+                page.waitForSelector('#rdoPays2'),
+                page.waitForSelector('#cbxUserInfoAgree'),
+                page.waitForSelector('#cbxCancelFeeAgree'),
+            ]);
             await page.evaluate(() => {
-                document.querySelector('#rdoPays2')?.click();
-                document.querySelector('#cbxUserInfoAgree')?.click();
-                document.querySelector('#cbxCancelFeeAgree')?.click();
-            });
-
-            await page.evaluate(() => {
+                document.querySelector('#rdoPays2').click();
+                document.querySelector('#cbxUserInfoAgree').click();
+                document.querySelector('#cbxCancelFeeAgree').click();
                 fdc_PrePayCheck();
             });
-            
         } catch (error) {
             console.error('Ticketing execution failed:', error);
             throw error;
@@ -186,87 +190,119 @@ const ticketingFunctions = {
             await page.waitForSelector('iframe[name="ifrmSeatFrame"]');
             const frame = await (await page.$('iframe[name="ifrmSeatFrame"]')).contentFrame();
             await frame.waitForSelector('div[title]');
-            await frame.evaluate((params) => {
-                // 좌석들의 거리 계산 및 정렬을 위한 배열 생성
-                const top = document.querySelector('.bx_top');
-                const topRect = top.getBoundingClientRect();
-                const topCenterX = topRect.left + (topRect.width / 2);
-                const topCenterY = topRect.top + (topRect.height / 2);
-                
-                // 좌석과 거리 정보를 저장할 배열
-                const seatsWithDistances = [];
-                
-                // 모든 좌석의 거리 계산
-                for (const seat of document.querySelectorAll(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[title${params.floor ? '^="' + params.floor + '"' : ''}]`)) {
-                    const rect = seat.getBoundingClientRect();
-                    const seatCenterX = rect.left + (rect.width / 2);
-                    const seatCenterY = rect.top + (rect.height / 2);
-                    
-                    const deltaX = topCenterX - seatCenterX;
-                    const deltaY = topCenterY - seatCenterY;
-                    const distance = deltaX * deltaX + deltaY * deltaY;
-                    
-                    seatsWithDistances.push({ seat, distance });
+            const areaCount = (await frame.$$('map[name="maphall"] area'))?.length || 1;
+            let seatsWithDistances = [];
+            for (let i = 0; i < areaCount; i++) {
+                if (i != 0) {
+                    frame.evaluate((i) => {
+                        ChangeBlock(i);
+                    }, i);
                 }
-                
-                // 거리순으로 정렬
-                seatsWithDistances.sort((a, b) => a.distance - b.distance);
-                
-                // 상위 10% 좌석 수 계산 (최소 1개)
-                const topPercentage = 0.1; // 10%
-                const topCount = Math.max(1, Math.ceil(seatsWithDistances.length * topPercentage));
-                
-                // 상위 10% 중에서 랜덤 선택
-                const randomIndex = Math.floor(Math.random() * topCount);
-                const selectedSeat = seatsWithDistances[randomIndex].seat;
-                
+                await frame.waitForSelector('.bx_top');
+                const [topCenterX, topCenterY] = await frame.$eval('.bx_top', (el) => {
+                    const rect = el.getBoundingClientRect()
+                    return [rect.left + (rect.width / 2), rect.top + (rect.height / 2)];
+                });
+                await frame.waitForSelector('div[title]');
+                const res = await frame.evaluate((params, topCenterX, topCenterY) => {
+                    const res = [];
+                    const seats = document.querySelectorAll(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[title${params.floor ? '^="' + params.floor + '"' : ''}]`);
+                    for (const seat of seats) {
+                        if (seat) {
+                            const rect = seat.getBoundingClientRect();
+                            const seatCenterX = rect.left + (rect.width / 2);
+                            const seatCenterY = rect.top + (rect.height / 2);
+                            
+                            const deltaX = topCenterX - seatCenterX;
+                            const deltaY = topCenterY - seatCenterY;
+                            
+                            res.push({ title: seat.title, distance: deltaX * deltaX + deltaY * deltaY });
+                        }
+                    }
+                    return res;
+                }, params, topCenterX, topCenterY);
+                if (res && res.length) {
+                    seatsWithDistances = res;
+                    break;
+                }
+            }
+            
+            // 거리순으로 정렬
+            seatsWithDistances.sort((a, b) => a.distance - b.distance);
+            // 상위 5% 좌석 수 계산 (최소 1개)
+            const topPercentage = 0.05; // 5%
+            const topCount = Math.max(1, Math.ceil(seatsWithDistances.length * topPercentage));
+            // 상위 5% 중에서 랜덤 선택
+            const randomIndex = Math.floor(Math.random() * topCount);
+            const selectedSeatTitle = seatsWithDistances[randomIndex].title;
+            
+            frame.evaluate((selectedSeatTitle) => {
                 // 선택된 좌석 클릭
-                selectedSeat.click();
+                document.querySelector(`div[title="${selectedSeatTitle}"]`).click();
                 ChoiceEnd();
-                
-                // 디버깅을 위한 정보 반환 (필요시 사용)
-                return {
-                    totalSeats: seatsWithDistances.length,
-                    topSeatsCount: topCount,
-                    selectedIndex: randomIndex,
-                    selectedDistance: Math.sqrt(seatsWithDistances[randomIndex].distance)
-                };
-            }, params);
-            await page.waitForSelector('#spanPromotionSeat input');
-            await page.click('#spanPromotionSeat input');
-            await sleep(500);
+            }, selectedSeatTitle);
 
+            await page.waitForSelector('#spanPromotionSeat input[value]');
             // 프로모션 처리
             await page.evaluate(() => {
                 fdc_PromotionEnd();
             });
-            await page.waitForSelector('#deliveryPos input');
-            await page.waitForSelector('.delivery input');
-            await sleep(1000);
-            await page.click('#deliveryPos input');
+            await Promise.all([
+                page.waitForSelector('#deliveryPos input[value]'),
+                page.waitForSelector('#LUAddr_UserName[value]'),
+                page.waitForSelector('#LUAddr_MailH[value]'),
+                page.waitForSelector('#LUAddr_MailD[value]'),
+            ]);
             await page.evaluate(() => {
+                document.querySelector('#ordererMobile1').value = '010';
+                document.querySelector('#ordererMobile2').value = '0000';
+                document.querySelector('#ordererMobile3').value = '0000';
                 fdc_DeliveryEnd();
             });
-            await page.waitForSelector('#rdoPays2');
-            await sleep(500);
-            
+            await Promise.all([
+                page.waitForSelector('#rdoPays2'),
+                page.waitForSelector('#cbxAllAgree'),
+            ]);
             await page.evaluate(() => {
-                document.querySelector('#rdoPays2')?.click();
-                document.querySelector('#cbxUserInfoAgree')?.click();
-                document.querySelector('#cbxCancelFeeAgree')?.click();
-            });
-
-            await page.evaluate(() => {
+                document.querySelector('#rdoPays2').click();
+                document.querySelector('#cbxAllAgree').click();
                 fdc_PrePayCheck();
             });
-            
         } catch (error) {
             console.error('Ticketing execution failed:', error);
             throw error;
         }
     },
 };
+
+const loginFunctions = {
+    'yes24 global': async (page, site, account) => {
+        page.goto(site.loginUrl);
+        await Promise.all([
+            page.waitForSelector(site.selectors.id),
+            page.waitForSelector(site.selectors.pw),
+        ]);
+        await page.evaluate((q1, v1, q2, v2) => {
+            document.querySelector(q1).setAttribute('value', v1);
+            document.querySelector(q2).setAttribute('value', v2);
+            jsf_mem_login();
+        }, site.selectors.id, account.username, site.selectors.pw, account.password);
+    },
+    'yes24': async (page, site, account) => {
+        page.goto(site.loginUrl);
+        await Promise.all([
+            page.waitForSelector(site.selectors.id),
+            page.waitForSelector(site.selectors.pw),
+        ]);
+        await page.evaluate((q1, v1, q2, v2) => {
+            document.querySelector(q1).setAttribute('value', v1);
+            document.querySelector(q2).setAttribute('value', v2);
+        }, site.selectors.id, account.username, site.selectors.pw, account.password);
+        await page.click(site.selectors.login);
+    },
+};
 module.exports = {
     sites,
-    ticketingFunctions
+    ticketingFunctions,
+    loginFunctions
 };

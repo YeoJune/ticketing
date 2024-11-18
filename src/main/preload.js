@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('api', {
     saveAccount: (siteId, account) => ipcRenderer.invoke('save-account', siteId, account),
     removeAccount: (siteId, index) => ipcRenderer.invoke('remove-account', siteId, index),
     startExecution: (data) => ipcRenderer.invoke('start-execution', data),
+    closeBrowsers: () => ipcRenderer.invoke('close-browsers'),
     scheduleTicketing: (data) => ipcRenderer.invoke('schedule-ticketing', data),
 });
