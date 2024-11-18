@@ -99,6 +99,17 @@ class App {
         alert('예약이 완료되었습니다.');
     }
 
+    goBack(viewId) {
+        // 현재 입력된 내용 초기화 (선택사항)
+        if (viewId === 'siteView') {
+            this.currentSite = null;
+            this.accounts = [];
+        }
+        
+        // 화면 전환
+        this.showView(viewId);
+    }
+    
     showView(viewId) {
         ['siteView', 'accountView', 'executionView'].forEach(id => {
             document.getElementById(id).style.display = id === viewId ? 'block' : 'none';

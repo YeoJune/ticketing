@@ -162,6 +162,7 @@ const ticketingFunctions = {
             }
             targetTime = `${targetTime.split(':')[0]}시 ${targetTime.split(':')[1]}분`
 
+            await page.goto(params.url);
             console.log(`Starting ticketing process for ${targetDate} ${targetTime}`);
             const newPagePromise = new Promise((resolve) =>
                 page.browser().on('targetcreated', async (target) => {
@@ -171,8 +172,7 @@ const ticketingFunctions = {
                     }
                 })
               );
-            
-            await page.goto(params.url);
+            await page.waitForSelector('body');
             await page.evaluate(() => {
                 jsf_pdi_GoPerfSale();
             });
