@@ -5,7 +5,7 @@ const { calculateGridSize, calculateWindowPos } = require('../../utils');
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36';
 
-process.env.NODE_ENV = 'development';
+//process.env.NODE_ENV = 'development';
 
 // Chromium 실행 경로 설정 함수
 function getChromiumExecPath() {
@@ -40,9 +40,9 @@ class BrowserManager {
                 // 창 크기 및 위치 지정
                 `--window-position=${posX * cellWidth},${posY * cellHeight}`,
                 `--window-size=${cellWidth},${cellHeight}`,
-                '--start-maximized',
         
                 // 기본 Puppeteer 최적화 플래그
+                '--no-user-data-dir',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage', // 메모리 사용 최적화
@@ -53,6 +53,7 @@ class BrowserManager {
                 '--enable-automation', // 자동화 감지 플래그 활성화
                 '--metrics-recording-only', // 브라우저 성능 데이터만 기록
                 '--disable-site-isolation-trials',
+                '--disable-features=IsolateOrigins,SitePerProcess',
         
                 // GPU 사용 최적화
                 '--disable-accelerated-2d-canvas', // 2D 캔버스 가속 비활성화
@@ -74,7 +75,7 @@ class BrowserManager {
                 '--disable-breakpad', // 크래시 리포트 비활성화
                 '--disable-component-extensions-with-background-pages', // 백그라운드 확장 비활성화
                 '--disable-extensions', // 확장 프로그램 비활성화
-        
+
                 // 사용자 에이전트
                 `--user-agent=${USER_AGENT}`
             ]
