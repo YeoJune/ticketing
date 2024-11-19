@@ -27,7 +27,7 @@ function createWindow() {
 app.whenReady().then(() => {
     createWindow();
     
-    const handlers = setupHandlers(browserManager, storeManager, sites);
+    const handlers = setupHandlers(browserManager, storeManager, sites, mainWindow);
     
     // IPC 핸들러 등록
     Object.entries(handlers).forEach(([channel, handler]) => {

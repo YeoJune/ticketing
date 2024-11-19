@@ -62,6 +62,11 @@ class App {
         await this.loadAccounts(this.currentSite);
     }
 
+    selectAllAccounts() {
+        const accounts = document.querySelectorAll('#accountList input[type="checkbox"]');
+        accounts.forEach(account => account.checked = true);
+    }
+
     async startExecution() {
         const selectedAccounts = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
             .map(checkbox => this.accounts[checkbox.id.split('-')[1]]);
@@ -106,6 +111,7 @@ class App {
             this.accounts = [];
         } else if (viewId === 'accountView') {
             window.api.closeBrowsers();
+            window.api.returnToMain();
         }
         
         // 화면 전환

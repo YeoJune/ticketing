@@ -1,5 +1,7 @@
 // handlers.js
-function setupHandlers(browserManager, storeManager, { sites, ticketingFunctions, loginFunctions }) {
+const { calculateGridSize } = require('../utils');
+
+function setupHandlers(browserManager, storeManager, { sites, ticketingFunctions, loginFunctions }, mainWindow) {
     return {
         'get-sites': () => {
             return Object.values(sites).map(site => ({
@@ -19,10 +21,19 @@ function setupHandlers(browserManager, storeManager, { sites, ticketingFunctions
             storeManager.removeAccount(siteId, index),
         
         'start-execution': async ({ siteId, accounts }) => {
+            const { cellWidth, cellHeight } = calculateGridSize(3);
+            mainWindow.setPosition(0, 0);
+            mainWindow.setSize(cellWidth, cellHeight);
             for (const [index, account] of accounts.entries()) {
-                const { page } = await browserManager.createBrowser(index);
-                loginFunctions[siteId](page, sites[siteId], account);
+                (async () => {
+                    const { page } = await browserManager.createBrowser(index);
+                    await loginFunctions[siteId](page, sites[siteId], account);
+                })()
             }
+        },
+        'return-to-main': async () => {
+            mainWindow.setSize(800, 600);
+            mainWindow.center();
         },
         'close-browsers': async () => {
             await browserManager.closeAll();

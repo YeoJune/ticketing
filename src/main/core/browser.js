@@ -1,6 +1,7 @@
 // core/browser.js
 const puppeteer = require('puppeteer');
 const path = require('path');
+const { calculateGridSize, calculateWindowPos } = require('../../utils');
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36';
 
@@ -30,13 +31,15 @@ class BrowserManager {
     }
 
     async createBrowser(position) {
+        const { cellWidth, cellHeight } = calculateGridSize(3);
+        const { posX, posY } = calculateWindowPos(position);
         const browser = await puppeteer.launch({
             headless: false,
             executablePath: getChromiumExecPath(),
             args: [
                 // 창 크기 및 위치 지정
-                `--window-position=${(position % 3) * 800},${Math.floor(position / 3) * 600}`,
-                '--window-size=800,600',
+                `--window-position=${posX * cellWidth},${posY * cellHeight}`,
+                `--window-size=${cellWidth},${cellHeight}`,
                 '--start-maximized',
         
                 // 기본 Puppeteer 최적화 플래그
@@ -84,7 +87,7 @@ class BrowserManager {
 
     async closeAll() {
         for (const { browser } of this.instances) {
-            await browser.close();
+            browser.close();
         }
         this.instances = [];
     }

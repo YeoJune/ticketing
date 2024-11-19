@@ -30,7 +30,9 @@
             <input type="password" id="password" placeholder="비밀번호" required>
             <button type="submit">계정 추가</button>
         </form>
-        <div id="accountList"></div>
+        <button id="selectAll" onclick="app.selectAllAccounts()">전체 선택</button>
+        <div id="accountList">
+        </div>
         <button onclick="app.startExecution()">실행하기</button>
     </div>
 
