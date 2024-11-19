@@ -2,6 +2,8 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36';
+
 process.env.NODE_ENV = 'development';
 
 // Chromium 실행 경로 설정 함수
@@ -32,37 +34,50 @@ class BrowserManager {
             headless: false,
             executablePath: getChromiumExecPath(),
             args: [
-                '--no-user-data-dir',
+                // 창 크기 및 위치 지정
                 `--window-position=${(position % 3) * 800},${Math.floor(position / 3) * 600}`,
                 '--window-size=800,600',
+                '--start-maximized',
+        
+                // 기본 Puppeteer 최적화 플래그
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-infobars',
-                '--single-process',
-                '--no-zygote',
-                '--no-first-run',
+                '--disable-dev-shm-usage', // 메모리 사용 최적화
+                '--disable-infobars', // 정보창 제거
+                '--disable-background-timer-throttling', // 백그라운드에서 작업 스로틀링 방지
+                '--disable-renderer-backgrounding', // 비활성 탭에서도 렌더링 유지
+                '--disable-backgrounding-occluded-windows', // 가려진 창의 백그라운드 작업 방지
+                '--enable-automation', // 자동화 감지 플래그 활성화
+                '--metrics-recording-only', // 브라우저 성능 데이터만 기록
+                '--disable-site-isolation-trials',
+        
+                // GPU 사용 최적화
+                '--disable-accelerated-2d-canvas', // 2D 캔버스 가속 비활성화
+                '--enable-unsafe-webgpu', // GPU 렌더링 지원
+                '--use-gl=desktop', // OpenGL을 데스크톱 설정으로 강제
+        
+                // 네트워크 성능 최적화
+                '--enable-features=NetworkService,NetworkServiceInProcess', // 네트워크 서비스 최적화
+                '--disable-features=TranslateUI,BlinkGenPropertyTrees', // 번역 UI 및 성능 비활성화
+        
+                // SSL 인증서 무시 (테스트 환경에서 유용)
                 '--ignore-certificate-errors',
                 '--ignore-certificate-errors-skip-list',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu',
-                '--hide-scrollbars',
-                '--disable-notifications',
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-breakpad',
-                '--disable-component-extensions-with-background-pages',
-                '--disable-extensions',
-                '--disable-features=TranslateUI,BlinkGenPropertyTrees',
-                '--disable-ipc-flooding-protection',
-                '--disable-renderer-backgrounding',
-                '--enable-features=NetworkService,NetworkServiceInProcess',
-                '--force-color-profile=srgb',
-                '--metrics-recording-only',
-                '--mute-audio'
+        
+                // 사용자 경험 최적화
+                '--force-color-profile=srgb', // 색상 프로파일 표준화
+                '--mute-audio', // 오디오 비활성화
+                '--disable-notifications', // 브라우저 알림 비활성화
+                '--disable-breakpad', // 크래시 리포트 비활성화
+                '--disable-component-extensions-with-background-pages', // 백그라운드 확장 비활성화
+                '--disable-extensions', // 확장 프로그램 비활성화
+        
+                // 사용자 에이전트
+                `--user-agent=${USER_AGENT}`
             ]
         });
         const page = (await browser.pages())[0];
+        page.setViewport({ width: 0, height: 0 });
         this.instances.push({ browser, page });
         return { browser, page };
     }
