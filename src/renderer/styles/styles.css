@@ -1,6 +1,6 @@
 /* 기본 레이아웃 */
 body {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    font-family: 'Pretendard', system-ui, sans-serif;
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
@@ -9,15 +9,13 @@ body {
     line-height: 1.6;
 }
 
-/* 화면 전환 관련 스타일 */
+/* 화면 */
 .view {
     display: none;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
     background: white;
     padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     margin-top: 20px;
 }
 
@@ -25,9 +23,13 @@ body {
     margin-top: 0;
 }
 
-/* 활성화된 화면 스타일 */
-.view[style*="display: block"] {
-    opacity: 1;
+/* 헤더 */
+h2 {
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+    margin: 0 0 20px;
+    font-size: 24px;
 }
 
 .view-header {
@@ -37,48 +39,9 @@ body {
     margin-bottom: 20px;
 }
 
-.view-header h2 {
-    margin: 0;
-    border: none;
-    padding: 0;
-}
-
-/* 뒤로가기 버튼 스타일 */
-.back-button {
-    background-color: transparent;
-    color: #3498db;
-    border: 1px solid #3498db;
-    padding: 8px 16px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.back-button:hover {
-    background-color: #f8f9fa;
-    color: #2980b9;
-    border-color: #2980b9;
-}
-
-.back-button .arrow {
-    font-size: 18px;
-    line-height: 1;
-}
-
-/* 헤더 스타일 */
-h2 {
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 24px;
-}
-
-/* 사이트 목록 스타일 */
-#siteList .site-item {
-    background: #ffffff;
+/* 리스트 아이템 */
+.site-item, .account-item {
+    background: #fff;
     padding: 15px;
     margin: 10px 0;
     border-radius: 8px;
@@ -86,39 +49,9 @@ h2 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: transform 0.2s;
 }
 
-#siteList .site-item:hover {
-    transform: translateX(5px);
-    border-color: #3498db;
-}
-
-/* 계정 관리 폼 스타일 */
-#accountForm {
-    margin-bottom: 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: 10px;
-}
-
-/* 계정 목록 스타일 */
-#accountList {
-    margin: 20px 0;
-}
-
-.account-item {
-    background: #ffffff;
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 6px;
-    border: 1px solid #e1e1e1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* 폼 요소 스타일 */
+/* 폼 */
 .form-group {
     margin-bottom: 16px;
 }
@@ -129,7 +62,6 @@ input, select {
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
-    transition: border-color 0.2s;
 }
 
 input:focus, select:focus {
@@ -137,14 +69,13 @@ input:focus, select:focus {
     border-color: #3498db;
 }
 
-/* 입력 힌트 스타일 */
 .input-hint {
     font-size: 12px;
     color: #666;
     margin-top: 4px;
 }
 
-/* 버튼 스타일 */
+/* 버튼 */
 button {
     background-color: #3498db;
     color: white;
@@ -153,59 +84,86 @@ button {
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.2s;
 }
 
 button:hover {
     background-color: #2980b9;
 }
 
-/* 실행하기 버튼 특별 스타일 */
-button[onclick*="startExecution"] {
-    background-color: #2ecc71;
-    width: 100%;
+.back-button {
+    background: transparent;
+    color: #3498db;
+    border: 1px solid #3498db;
+}
+
+/* 실행 버튼 */
+.execution-buttons {
+    display: flex;
+    gap: 10px;
     margin-top: 20px;
+}
+
+.execution-buttons button {
+    flex: 1;
     padding: 15px;
     font-size: 16px;
 }
 
-button[onclick*="startExecution"]:hover {
-    background-color: #27ae60;
+/* 상태 표시 */
+.status-container {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
 }
 
-/* 체크박스 스타일 */
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.status-item:last-child {
+    border-bottom: none;
+}
+
+.status {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status.running {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* 체크박스 */
 input[type="checkbox"] {
     width: auto;
     margin-right: 8px;
 }
 
-/* 반응형 디자인 */
+/* 반응형 */
 @media (max-width: 600px) {
     body {
         padding: 10px;
     }
     
-    #accountForm {
-        grid-template-columns: 1fr;
+    .view-header, .execution-buttons {
+        flex-direction: column;
     }
     
     .site-item, .account-item {
         flex-direction: column;
         text-align: center;
-    }
-    
-    .site-item button, .account-item button {
-        margin-top: 10px;
-        width: 100%;
-    }
-    
-    .view-header {
-        flex-direction: column;
         gap: 10px;
-        align-items: flex-start;
-    }
-    
-    .back-button {
-        width: auto;
     }
 }

@@ -30,10 +30,14 @@
             <input type="password" id="password" placeholder="비밀번호" required>
             <button type="submit">계정 추가</button>
         </form>
+        <hr>
         <button id="selectAll" onclick="app.selectAllAccounts()">전체 선택</button>
         <div id="accountList">
         </div>
-        <button onclick="app.startExecution()">실행하기</button>
+        <div class="execution-buttons">
+            <button onclick="app.startTicketing()">티켓팅 실행</button>
+            <button onclick="app.startCancelTicketing()">취소 티켓팅 실행</button>
+        </div>
     </div>
 
     <!-- 실행 화면 -->
@@ -84,6 +88,56 @@
             </div>
             
             <button type="submit">예약하기</button>
+        </form>
+    </div>
+    <div id="cancelTicketingView" class="view">
+        <div class="view-header">
+            <h2>취소 티켓팅 설정</h2>
+            <button class="back-button" onclick="app.goBack('accountView')">
+                <span class="arrow">←</span> 계정 관리로
+            </button>
+        </div>
+        <form id="cancelTicketingForm">
+            <div class="form-group">
+                <input type="text" id="cancelTargetUrl" placeholder="티켓팅 URL" required>
+            </div>
+            
+            <div class="form-group">
+                <input type="text" id="cancelTargetDate" placeholder="예매 날짜 (예: 2024-12-20)" required>
+                <div class="input-hint">YYYY-MM-DD 형식으로 입력해주세요</div>
+            </div>
+            
+            <div class="form-group">
+                <input type="text" id="cancelTargetTime" placeholder="예매 시작 시각 (예: 20:00)" required>
+                <div class="input-hint">HH:mm 형식으로 입력해주세요</div>
+            </div>
+            
+            <div class="form-group">
+                <select id="cancelGrade">
+                    <option value="">좌석 등급 선택 (선택사항)</option>
+                    <option value="VIP">VIP</option>
+                    <option value="R">R</option>
+                    <option value="S">S</option>
+                    <option value="A">A</option>
+                    <option value="SR">SR</option>
+                    <option value="스탠딩">스탠딩석</option>
+                    <option value="지정">지정석</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <input type="datetime-local" id="cancelStartTime" required>
+                <div class="input-hint">매크로 실행 시작 시각을 선택해주세요</div>
+            </div>
+            
+            <div class="form-group">
+                <input type="datetime-local" id="cancelEndTime">
+                <div class="input-hint">매크로 실행 종료 시각 (선택사항)</div>
+            </div>
+            
+            <button type="submit">실행하기</button>
+            <button type="button" id="stopCancelTicketing" style="display: none;">중지하기</button>
+            <div id="ticketingStatus" class="status-container"></div>
         </form>
     </div>
 
