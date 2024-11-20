@@ -1,6 +1,6 @@
 {
   "name": "ticketing-macro",
-  "version": "1.0.5",
+  "version": "1.0.10",
   "description": "Ticketing Macro Application",
   "main": "src/main/index.js",
   "scripts": {

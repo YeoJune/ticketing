@@ -4,6 +4,7 @@ const ImageToTextConverter = require('../core/ImageToTextConverter');
 const os = require('os');
 const fs = require('fs/promises');
 const path = require('path');
+const { timeout } = require('puppeteer');
 
 async function waitForImageLoad(page, selector) {
     await page.waitForFunction(
@@ -55,89 +56,207 @@ const ticketingFunctions = {
                 targetTime = new Date(`2000-01-01T${params.time}`).toTimeString().slice(0, 5);
             }
 
+            await page.goto(params.url);
             console.log(`Starting ticketing process for ${targetDate} ${targetTime}`);
-            
-            await page.goto(`http://ticket.yes24.com/Pages/English/Sale/FnPerfSaleProcess.aspx?IdPerf=${params.url.match(/IdPerf=(\d+)/)[1]}`);
-            
-            // 날짜 선택
-            await page.evaluate(async (date, time) => {
-                jgCalSelDate = date;
-                const data = await $j.ajax({
-                    async: true,
-                    type: "POST",
-                    url: "/Pages/English/Sale/Ajax/Perf/FnPerfTime.aspx",
-                    data: { pDay: $j.trim(date.replace(/-/g, "")), pIdPerf: $j.trim(jgIdPerf), pIdCode: $j.trim(jgIdCode), pIsMania: $j.trim(jgIsMania) },
-                    dataType: "html",
-                });
-                
-                const joData = $j("#divTimeTempData").html(data);
-
-                $j("#ulTime").html(joData.find("#ulTimeData").html());
-                $j("#ulTime > li").unbind('.step01_time_li').bind('click.step01_time_li', fdc_UlTimeClick);
-                $j("#selFlashTime").html(joData.find("#selFlashTimeData").html());
-                const matchingLi = $j("#ulTime > li").filter((_, li) => $j(li).attr("timeinfo") === time);
-
-                const selectedValue = matchingLi.length > 0 ? matchingLi.attr("value") : null;
-                
-                if (selectedValue) {
-                    $j("#selFlashTime").val(selectedValue).trigger("change");
-                }
-            }, targetDate, targetTime);
+            const newPagePromise = new Promise((resolve) =>
+                page.browser().on('targetcreated', async (target) => {
+                    if (target.type() === 'page') {
+                        const page = await target.page();
+                        resolve(page); // Promise를 완료시킴
+                    }
+                })
+              );
+            await page.waitForSelector('body');
+            await page.click('.sinfo a');
+            page = await newPagePromise;
+            await page.setViewport({ width: 0, height: 0 });
+            await page.waitForSelector(`[id="${targetDate}"]`);
+            await page.click(`[id="${targetDate}"]`);
+            await page.waitForSelector('#ulTime li');
+            await page.click(`[timeinfo="${targetTime}"]`);
+            await page.click('#btnSeatSelect');
 
             await page.waitForSelector('iframe[name="ifrmSeatFrame"]');
             const frame = await (await page.$('iframe[name="ifrmSeatFrame"]')).contentFrame();
-            await frame.waitForSelector('div[title]');
-            const areaCount = (await frame.$$('map[name="maphall"] area'))?.length || 1;
+            await frame.waitForSelector('.minimap_m');
+            try {
+                await frame.waitForSelector('.minimap_m .btn_all', {timeout: 100});
+            } catch (err) {
+
+            }
             
-            let seatsWithDistances = [];
-            for (let i = 0; i < areaCount; i++) {
-                if (i != 0) {
-                    frame.evaluate((i) => {
-                        ChangeBlock(i);
-                    }, i);
-                }
-                await frame.waitForSelector('.bx_top');
-                const [topCenterX, topCenterY] = await frame.$eval('.bx_top', (el) => {
-                    const rect = el.getBoundingClientRect()
-                    return [rect.left + (rect.width / 2), rect.top + (rect.height / 2)];
+            let sortedBlockIndices = [-1];
+            if (await frame.$('.minimap_m .btn_all')) {
+                await frame.waitForSelector('map[name="map_ticket"] area');
+                sortedBlockIndices = await frame.evaluate(() => {
+                    const areas = document.querySelectorAll('map[name="map_ticket"] area');
+                    const areaShapes = Array.from(areas)
+                        .map(area => {
+                            const blockNumber = parseInt(area.getAttribute('href').match(/ChangeBlock\((\d+)\)/)[1]);
+                            if (typeof ArBlockRemain !== 'undefined' && ArBlockRemain[blockNumber] > 0) {
+                                const coords = area.getAttribute('coords').split(',').map(Number);
+                                let centerX = 0, centerY = 0;
+                                for (let i = 0; i < coords.length; i += 2) {
+                                    centerX += coords[i];
+                                    centerY += coords[i + 1];
+                                }
+                                centerX /= (coords.length / 2);
+                                centerY /= (coords.length / 2);
+                                
+                                return {
+                                    center: { x: centerX, y: centerY },
+                                    blockNumber: blockNumber
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(shape => shape !== null); // null 값 제거
+
+                    if (areaShapes.length === 0) return [-1]; // 사용 가능한 블록이 없는 경우
+
+                    // 무대는 전체 영역의 상단 중앙
+                    const minY = Math.min(...areaShapes.map(s => s.center.y));
+                    const centerX = areaShapes.reduce((sum, s) => sum + s.center.x, 0) / areaShapes.length;
+                    
+                    return areaShapes
+                        .map(shape => ({
+                            index: shape.blockNumber,
+                            distance: 
+                                Math.pow(shape.center.x - centerX, 2) + 
+                                Math.pow(shape.center.y - minY, 2)
+                        }))
+                        .sort((a, b) => a.distance - b.distance)
+                        .map(block => block.index);
                 });
-                await frame.waitForSelector('div[title]');
-                const res = await frame.evaluate((params, topCenterX, topCenterY) => {
-                    const res = [];
-                    const seats = document.querySelectorAll(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[title${params.floor ? '^="' + params.floor + '"' : ''}]`);
-                    for (const seat of seats) {
-                        if (seat) {
-                            const rect = seat.getBoundingClientRect();
-                            const seatCenterX = rect.left + (rect.width / 2);
-                            const seatCenterY = rect.top + (rect.height / 2);
-                            
-                            const deltaX = topCenterX - seatCenterX;
-                            const deltaY = topCenterY - seatCenterY;
-                            
-                            res.push({ title: seat.title, distance: deltaX * deltaX + deltaY * deltaY });
+            } else if (await frame.$('#blockFile')) {
+                await frame.waitForSelector('map[name="maphall"] area');
+                sortedBlockIndices = await frame.evaluate(() => {
+                    const areas = document.querySelectorAll('map[name="maphall"] area');
+                    const areaShapes = Array.from(areas)
+                        .map(area => {
+                            const blockNumber = parseInt(area.getAttribute('onclick').match(/ChangeBlock\((\d+)\)/)[1]);
+                            if (typeof ArBlockRemain !== 'undefined' && ArBlockRemain[blockNumber] > 0) {
+                                const coords = area.getAttribute('coords').split(',').map(Number);
+                                let centerX = 0, centerY = 0;
+                                for (let i = 0; i < coords.length; i += 2) {
+                                    centerX += coords[i];
+                                    centerY += coords[i + 1];
+                                }
+                                centerX /= (coords.length / 2);
+                                centerY /= (coords.length / 2);
+                                
+                                return {
+                                    center: { x: centerX, y: centerY },
+                                    blockNumber: blockNumber
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(shape => shape !== null); // null 값 제거
+
+                    if (areaShapes.length === 0) return [-1]; // 사용 가능한 블록이 없는 경우
+
+                    // 무대는 전체 영역의 상단 중앙
+                    const minY = Math.min(...areaShapes.map(s => s.center.y));
+                    const centerX = areaShapes.reduce((sum, s) => sum + s.center.x, 0) / areaShapes.length;
+                    
+                    return areaShapes
+                        .map(shape => ({
+                            index: shape.blockNumber,
+                            distance: 
+                                Math.pow(shape.center.x - centerX, 2) + 
+                                Math.pow(shape.center.y - minY, 2)
+                        }))
+                        .sort((a, b) => a.distance - b.distance)
+                        .map(block => block.index);
+                });
+            }
+            let success = false;
+            let blockIndex = 0;
+
+            await page.on('dialog', async (dialog) => await dialog.accept());
+
+            while (blockIndex < sortedBlockIndices.length && !success) {
+                try {
+                    if (sortedBlockIndices[blockIndex] !== -1) {
+                        await frame.evaluate((blockNumber) => {
+                            ChangeBlock(blockNumber);
+                        }, sortedBlockIndices[blockIndex]);
+                    }
+
+                    await frame.waitForSelector('div[name=tk]');
+                    const seats = await frame.evaluate((params) => {
+                        const seats = Array.from(document.querySelectorAll(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[name="tk"]`));
+                        if (!seats.length) return [];
+
+                        // 모든 좌석의 평균 위치 계산에 title 유무와 관계없이 모든 좌석 사용
+                        const seatPositions = seats.map(seat => ({
+                            x: parseInt(seat.style.left),
+                            y: parseInt(seat.style.top)
+                        }));
+                        
+                        const centerX = seatPositions.reduce((sum, p) => sum + p.x, 0) / seatPositions.length;
+                        const minY = Math.min(...seatPositions.map(p => p.y));
+
+                        // 실제 선택 가능한 좌석만 필터링
+                        return seats
+                            .filter(seat => seat.title)
+                            .map(seat => {
+                                const x = parseInt(seat.style.left);
+                                const y = parseInt(seat.style.top);
+                                
+                                return { 
+                                    id: seat.id, 
+                                    distance: Math.sqrt(
+                                        Math.pow(x - centerX, 2) + 
+                                        Math.pow(y - minY, 2)
+                                    )
+                                };
+                            })
+                            .sort((a, b) => a.distance - b.distance);
+                    }, params);
+
+                    if (seats.length > 0) {
+                        for (const seat of seats) {
+                            try {
+                                await frame.click(`#${seat.id}`);
+                                const result = await frame.evaluate(() => {
+                                    return new Promise((resolve) => {
+                                        const originalAlert = window.alert;
+                                        window.alert = (message) => {
+                                            window.alert = originalAlert;
+                                            resolve(false);
+                                        };
+                                        try {
+                                            ChoiceEnd();
+                                            setTimeout(() => {
+                                                window.alert = originalAlert;
+                                                resolve(true);
+                                            }, 500);
+                                        } catch {
+                                            window.alert = originalAlert;
+                                            resolve(false);
+                                        }
+                                    });
+                                });
+
+                                if (result) {
+                                    success = true;
+                                    break;
+                                }
+                            } catch {
+                                continue;
+                            }
                         }
                     }
-                    return res;
-                }, params, topCenterX, topCenterY);
-                if (res && res.length) {
-                    seatsWithDistances = res;
-                    break;
+                    
+                    if (!success) blockIndex++;
+                } catch {
+                    blockIndex++;
+                    continue;
                 }
             }
-            // 거리순으로 정렬
-            seatsWithDistances.sort((a, b) => a.distance - b.distance);
-            // 상위 5% 좌석 수 계산 (최소 1개)
-            const topPercentage = 0.05; // 5%
-            const topCount = Math.max(1, Math.ceil(seatsWithDistances.length * topPercentage));
-            // 상위 5% 중에서 랜덤 선택
-            const randomIndex = Math.floor(Math.random() * topCount);
-            let selectedSeatTitle = seatsWithDistances[randomIndex].title;
-            if (!selectedSeatTitle) selectedSeatTitle = seatsWithDistances[0];
-            await frame.click(`div[title="${selectedSeatTitle}"]`);
-            while (!(await frame.$('div.son'))) await frame.click(`div[title="${selectedSeatTitle}"]`);
-            await frame.evaluate(() => {
-                ChoiceEnd();
-            });
+
             await page.waitForSelector('#spanPromotionSeat input[value]');
             // 프로모션 처리
             await page.evaluate(() => {
@@ -155,39 +274,39 @@ const ticketingFunctions = {
                 page.waitForSelector('#rdoPays2'),
                 page.waitForSelector('#cbxUserInfoAgree'),
                 page.waitForSelector('#cbxCancelFeeAgree'),
-                page.waitForSelector('#captchaImg'),
             ]);
 
-            const MAX_ATTEMPT = 10;
-            let attempt = 0;
-            let captchaText = ''
-            while (attempt < MAX_ATTEMPT && !/^\d{6}$/.test(captchaText)) {
-                if (attempt) {
-                    await page.evaluate(() => { 
-                        initCaptcha();
-                    });
-                    await sleep(50);
-                }
-                
-                await waitForImageLoad(page, '#captchaImg');
-                const captchaElement = await page.$('#captchaImg');
-                const captchaBase64 = await captchaElement.screenshot({ encoding: 'base64' });
-
-                const tempPath = path.join(os.tmpdir(), `captcha-${Date.now()}.png`);
-                const buffer = Buffer.from(captchaBase64, 'base64');
-                await fs.writeFile(tempPath, buffer);
+            if (await page.$('#captchaImg')) {
+                const MAX_ATTEMPT = 15;
+                let attempt = 0;
+                let captchaText = ''
+                while (attempt < MAX_ATTEMPT && !/^\d{6}$/.test(captchaText)) {
+                    if (attempt) {
+                        await page.evaluate(() => { 
+                            initCaptcha();
+                        });
+                        await sleep(50);
+                    }
+                    
+                    await waitForImageLoad(page, '#captchaImg');
+                    const captchaElement = await page.$('#captchaImg');
+                    const captchaBase64 = await captchaElement.screenshot({ encoding: 'base64' });
     
-                // OCR 수행
-                const converter = new ImageToTextConverter();
-                captchaText = await converter.extractText(tempPath);
-                attempt += 1;
+                    const tempPath = path.join(os.tmpdir(), `captcha-${Date.now()}.png`);
+                    const buffer = Buffer.from(captchaBase64, 'base64');
+                    await fs.writeFile(tempPath, buffer);
+        
+                    // OCR 수행
+                    const converter = new ImageToTextConverter();
+                    captchaText = await converter.extractText(tempPath);
+                    attempt += 1;
+                }
+    
+                // 인식된 캡챠 텍스트 입력
+                await page.evaluate((text) => {
+                    document.querySelector('#captchaText').value = text;
+                }, captchaText);    
             }
-
-            // 인식된 캡챠 텍스트 입력
-            await page.evaluate((text) => {
-                document.querySelector('#captchaText').value = text;
-            }, captchaText);
-
             await page.evaluate(() => {
                 document.querySelector('#rdoPays2').click();
                 document.querySelector('#cbxUserInfoAgree').click();
@@ -229,6 +348,8 @@ const ticketingFunctions = {
                 jsf_pdi_GoPerfSale();
             });
             page = await newPagePromise;
+            await page.setViewport({ width: 0, height: 0 });
+
             await page.waitForSelector(`[id="${targetDate}"]`);
             await page.click(`[id="${targetDate}"]`);
             await page.waitForSelector('#ulTime li');
@@ -237,60 +358,185 @@ const ticketingFunctions = {
 
             await page.waitForSelector('iframe[name="ifrmSeatFrame"]');
             const frame = await (await page.$('iframe[name="ifrmSeatFrame"]')).contentFrame();
-            await frame.waitForSelector('div[title]');
-            const areaCount = (await frame.$$('map[name="maphall"] area'))?.length || 1;
-            let seatsWithDistances = [];
-            for (let i = 0; i < areaCount; i++) {
-                if (i != 0) {
-                    frame.evaluate((i) => {
-                        ChangeBlock(i);
-                    }, i);
-                }
-                await frame.waitForSelector('.bx_top');
-                const [topCenterX, topCenterY] = await frame.$eval('.bx_top', (el) => {
-                    const rect = el.getBoundingClientRect()
-                    return [rect.left + (rect.width / 2), rect.top + (rect.height / 2)];
+            await frame.waitForSelector('.minimap_m');
+            try {
+                await frame.waitForSelector('.minimap_m .btn_all', {timeout: 100});
+            } catch (err) {
+
+            }
+            
+            let sortedBlockIndices = [-1];
+            if (await frame.$('.minimap_m .btn_all')) {
+                await frame.waitForSelector('map[name="map_ticket"] area');
+                sortedBlockIndices = await frame.evaluate(() => {
+                    const areas = document.querySelectorAll('map[name="map_ticket"] area');
+                    const areaShapes = Array.from(areas)
+                        .map(area => {
+                            const blockNumber = parseInt(area.getAttribute('href').match(/ChangeBlock\((\d+)\)/)[1]);
+                            if (typeof ArBlockRemain !== 'undefined' && ArBlockRemain[blockNumber] > 0) {
+                                const coords = area.getAttribute('coords').split(',').map(Number);
+                                let centerX = 0, centerY = 0;
+                                for (let i = 0; i < coords.length; i += 2) {
+                                    centerX += coords[i];
+                                    centerY += coords[i + 1];
+                                }
+                                centerX /= (coords.length / 2);
+                                centerY /= (coords.length / 2);
+                                
+                                return {
+                                    center: { x: centerX, y: centerY },
+                                    blockNumber: blockNumber
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(shape => shape !== null); // null 값 제거
+
+                    if (areaShapes.length === 0) return [-1]; // 사용 가능한 블록이 없는 경우
+
+                    // 무대는 전체 영역의 상단 중앙
+                    const minY = Math.min(...areaShapes.map(s => s.center.y));
+                    const centerX = areaShapes.reduce((sum, s) => sum + s.center.x, 0) / areaShapes.length;
+                    
+                    return areaShapes
+                        .map(shape => ({
+                            index: shape.blockNumber,
+                            distance: 
+                                Math.pow(shape.center.x - centerX, 2) + 
+                                Math.pow(shape.center.y - minY, 2)
+                        }))
+                        .sort((a, b) => a.distance - b.distance)
+                        .map(block => block.index);
                 });
-                await frame.waitForSelector('div[title]');
-                const res = await frame.evaluate((params, topCenterX, topCenterY) => {
-                    const res = [];
-                    const seats = document.querySelectorAll(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[title${params.floor ? '^="' + params.floor + '"' : ''}]`);
-                    console.log(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[title${params.floor ? '^="' + params.floor + '"' : ''}]`);
-                    for (const seat of seats) {
-                        if (seat) {
-                            const rect = seat.getBoundingClientRect();
-                            const seatCenterX = rect.left + (rect.width / 2);
-                            const seatCenterY = rect.top + (rect.height / 2);
-                            
-                            const deltaX = topCenterX - seatCenterX;
-                            const deltaY = topCenterY - seatCenterY;
-                            
-                            res.push({ title: seat.title, distance: deltaX * deltaX + deltaY * deltaY });
+            } else if (await frame.$('#blockFile')) {
+                await frame.waitForSelector('map[name="maphall"] area');
+                sortedBlockIndices = await frame.evaluate(() => {
+                    const areas = document.querySelectorAll('map[name="maphall"] area');
+                    const areaShapes = Array.from(areas)
+                        .map(area => {
+                            const blockNumber = parseInt(area.getAttribute('onclick').match(/ChangeBlock\((\d+)\)/)[1]);
+                            if (typeof ArBlockRemain !== 'undefined' && ArBlockRemain[blockNumber] > 0) {
+                                const coords = area.getAttribute('coords').split(',').map(Number);
+                                let centerX = 0, centerY = 0;
+                                for (let i = 0; i < coords.length; i += 2) {
+                                    centerX += coords[i];
+                                    centerY += coords[i + 1];
+                                }
+                                centerX /= (coords.length / 2);
+                                centerY /= (coords.length / 2);
+                                
+                                return {
+                                    center: { x: centerX, y: centerY },
+                                    blockNumber: blockNumber
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(shape => shape !== null); // null 값 제거
+
+                    if (areaShapes.length === 0) return [-1]; // 사용 가능한 블록이 없는 경우
+
+                    // 무대는 전체 영역의 상단 중앙
+                    const minY = Math.min(...areaShapes.map(s => s.center.y));
+                    const centerX = areaShapes.reduce((sum, s) => sum + s.center.x, 0) / areaShapes.length;
+                    
+                    return areaShapes
+                        .map(shape => ({
+                            index: shape.blockNumber,
+                            distance: 
+                                Math.pow(shape.center.x - centerX, 2) + 
+                                Math.pow(shape.center.y - minY, 2)
+                        }))
+                        .sort((a, b) => a.distance - b.distance)
+                        .map(block => block.index);
+                });
+            }
+            let success = false;
+            let blockIndex = 0;
+
+            await page.on('dialog', async (dialog) => await dialog.accept());
+
+            while (blockIndex < sortedBlockIndices.length && !success) {
+                try {
+                    if (sortedBlockIndices[blockIndex] !== -1) {
+                        await frame.evaluate((blockNumber) => {
+                            ChangeBlock(blockNumber);
+                        }, sortedBlockIndices[blockIndex]);
+                    }
+
+                    await frame.waitForSelector('div[name=tk]');
+                    const seats = await frame.evaluate((params) => {
+                        const seats = Array.from(document.querySelectorAll(`div${params.grade ? '[grade=\"' + params.grade + '석\"]' : ''}[name="tk"]`));
+                        if (!seats.length) return [];
+
+                        // 모든 좌석의 평균 위치 계산에 title 유무와 관계없이 모든 좌석 사용
+                        const seatPositions = seats.map(seat => ({
+                            x: parseInt(seat.style.left),
+                            y: parseInt(seat.style.top)
+                        }));
+                        
+                        const centerX = seatPositions.reduce((sum, p) => sum + p.x, 0) / seatPositions.length;
+                        const minY = Math.min(...seatPositions.map(p => p.y));
+
+                        // 실제 선택 가능한 좌석만 필터링
+                        return seats
+                            .filter(seat => seat.title)
+                            .map(seat => {
+                                const x = parseInt(seat.style.left);
+                                const y = parseInt(seat.style.top);
+                                
+                                return { 
+                                    id: seat.id, 
+                                    distance: Math.sqrt(
+                                        Math.pow(x - centerX, 2) + 
+                                        Math.pow(y - minY, 2)
+                                    )
+                                };
+                            })
+                            .sort((a, b) => a.distance - b.distance);
+                    }, params);
+
+                    if (seats.length > 0) {
+                        for (const seat of seats) {
+                            try {
+                                await frame.click(`#${seat.id}`);
+                                const result = await frame.evaluate(() => {
+                                    return new Promise((resolve) => {
+                                        const originalAlert = window.alert;
+                                        window.alert = (message) => {
+                                            window.alert = originalAlert;
+                                            resolve(false);
+                                        };
+                                        try {
+                                            ChoiceEnd();
+                                            setTimeout(() => {
+                                                window.alert = originalAlert;
+                                                resolve(true);
+                                            }, 500);
+                                        } catch {
+                                            window.alert = originalAlert;
+                                            resolve(false);
+                                        }
+                                    });
+                                });
+
+                                if (result) {
+                                    success = true;
+                                    break;
+                                }
+                            } catch {
+                                continue;
+                            }
                         }
                     }
-                    return res;
-                }, params, topCenterX, topCenterY);
-                if (res && res.length) {
-                    seatsWithDistances = res;
-                    break;
+                    
+                    if (!success) blockIndex++;
+                } catch {
+                    blockIndex++;
+                    continue;
                 }
             }
             
-            // 거리순으로 정렬
-            seatsWithDistances.sort((a, b) => a.distance - b.distance);
-            // 상위 5% 좌석 수 계산 (최소 1개)
-            const topPercentage = 0.05; // 5%
-            const topCount = Math.max(1, Math.ceil(seatsWithDistances.length * topPercentage));
-            // 상위 5% 중에서 랜덤 선택
-            const randomIndex = Math.floor(Math.random() * topCount);
-            const selectedSeatTitle = seatsWithDistances[randomIndex].title;
-            if (!selectedSeatTitle) selectedSeatTitle = seatsWithDistances[0];
-            await frame.click(`div[title="${selectedSeatTitle}"]`);
-            while(!(await frame.$('div.son'))) await frame.click(`div[title="${selectedSeatTitle}"]`);
-            frame.evaluate(() => {
-                ChoiceEnd();
-            });
-
             await page.waitForSelector('#spanPromotionSeat input[value]');
             // 프로모션 처리
             await page.evaluate(() => {
@@ -311,38 +557,39 @@ const ticketingFunctions = {
             await Promise.all([
                 page.waitForSelector('#rdoPays2'),
                 page.waitForSelector('#cbxAllAgree'),
-                page.waitForSelector('#captchaImg'),
             ]);
-            
-            const MAX_ATTEMPT = 10;
-            let attempt = 0;
-            let captchaText = ''
-            while (attempt < MAX_ATTEMPT && !/^\d{6}$/.test(captchaText)) {
-                if (attempt) {
-                    await page.evaluate(() => { 
-                        initCaptcha();
-                    });
-                    await sleep(50);
-                }
-                
-                await waitForImageLoad(page, '#captchaImg');
-                const captchaElement = await page.$('#captchaImg');
-                const captchaBase64 = await captchaElement.screenshot({ encoding: 'base64' });
 
-                const tempPath = path.join(os.tmpdir(), `captcha-${Date.now()}.png`);
-                const buffer = Buffer.from(captchaBase64, 'base64');
-                await fs.writeFile(tempPath, buffer);
+            if (await page.$('#captchaImg')) {
+                const MAX_ATTEMPT = 15;
+                let attempt = 0;
+                let captchaText = ''
+                while (attempt < MAX_ATTEMPT && !/^\d{6}$/.test(captchaText)) {
+                    if (attempt) {
+                        await page.evaluate(() => { 
+                            initCaptcha();
+                        });
+                        await sleep(50);
+                    }
+                    
+                    await waitForImageLoad(page, '#captchaImg');
+                    const captchaElement = await page.$('#captchaImg');
+                    const captchaBase64 = await captchaElement.screenshot({ encoding: 'base64' });
     
-                // OCR 수행
-                const converter = new ImageToTextConverter();
-                captchaText = await converter.extractText(tempPath);
-                attempt += 1;
+                    const tempPath = path.join(os.tmpdir(), `captcha-${Date.now()}.png`);
+                    const buffer = Buffer.from(captchaBase64, 'base64');
+                    await fs.writeFile(tempPath, buffer);
+        
+                    // OCR 수행
+                    const converter = new ImageToTextConverter();
+                    captchaText = await converter.extractText(tempPath);
+                    attempt += 1;
+                }
+    
+                // 인식된 캡챠 텍스트 입력
+                await page.evaluate((text) => {
+                    document.querySelector('#captchaText').value = text;
+                }, captchaText);    
             }
-
-            // 인식된 캡챠 텍스트 입력
-            await page.evaluate((text) => {
-                document.querySelector('#captchaText').value = text;
-            }, captchaText);
 
             await page.evaluate(() => {
                 document.querySelector('#rdoPays2').click();

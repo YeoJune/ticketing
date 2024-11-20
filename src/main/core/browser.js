@@ -37,51 +37,40 @@ class BrowserManager {
             headless: false,
             executablePath: getChromiumExecPath(),
             args: [
-                // 창 크기 및 위치 지정
+                // 창 크기 및 위치 설정
                 `--window-position=${posX * cellWidth},${posY * cellHeight}`,
                 `--window-size=${cellWidth},${cellHeight}`,
         
-                // 기본 Puppeteer 최적화 플래그
-                '--no-user-data-dir',
+                // 핵심 성능 설정
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage', // 메모리 사용 최적화
-                '--disable-infobars', // 정보창 제거
-                '--disable-background-timer-throttling', // 백그라운드에서 작업 스로틀링 방지
-                '--disable-renderer-backgrounding', // 비활성 탭에서도 렌더링 유지
-                '--disable-backgrounding-occluded-windows', // 가려진 창의 백그라운드 작업 방지
-                '--enable-automation', // 자동화 감지 플래그 활성화
-                '--metrics-recording-only', // 브라우저 성능 데이터만 기록
-                '--disable-site-isolation-trials',
-                '--disable-features=IsolateOrigins,SitePerProcess',
+                '--disable-dev-shm-usage',
+                '--disable-features=site-per-process',
+                '--disable-features=IsolateOrigins',
+                
+                // 백그라운드 작업 최적화
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
         
-                // GPU 사용 최적화
-                '--disable-accelerated-2d-canvas', // 2D 캔버스 가속 비활성화
-                '--enable-unsafe-webgpu', // GPU 렌더링 지원
-                '--use-gl=desktop', // OpenGL을 데스크톱 설정으로 강제
-        
-                // 네트워크 성능 최적화
-                '--enable-features=NetworkService,NetworkServiceInProcess', // 네트워크 서비스 최적화
-                '--disable-features=TranslateUI,BlinkGenPropertyTrees', // 번역 UI 및 성능 비활성화
-        
-                // SSL 인증서 무시 (테스트 환경에서 유용)
-                '--ignore-certificate-errors',
-                '--ignore-certificate-errors-skip-list',
-        
-                // 사용자 경험 최적화
-                '--force-color-profile=srgb', // 색상 프로파일 표준화
-                '--mute-audio', // 오디오 비활성화
-                '--disable-notifications', // 브라우저 알림 비활성화
-                '--disable-breakpad', // 크래시 리포트 비활성화
-                '--disable-component-extensions-with-background-pages', // 백그라운드 확장 비활성화
-                '--disable-extensions', // 확장 프로그램 비활성화
-
+                // 필수적인 기능 비활성화
+                '--disable-notifications',
+                '--disable-translate',
+                '--no-first-run',
+                '--no-default-browser-check',
+                
                 // 사용자 에이전트
                 `--user-agent=${USER_AGENT}`
-            ]
+            ],
+            defaultViewport: null,
+            ignoreDefaultArgs: ['--enable-automation']
         });
         const page = (await browser.pages())[0];
-        page.setViewport({ width: 0, height: 0 });
+        await page.setExtraHTTPHeaders({
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Sec-Fetch-Site': 'none'
+        });
+        await page.setViewport({ width: 0, height: 0 });
         this.instances.push({ browser, page });
         return { browser, page };
     }
