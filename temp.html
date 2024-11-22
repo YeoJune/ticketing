@@ -1,0 +1,1001 @@
+
+
+<script src="/resource/script/phase/deployPhaseUtils.js"></script>
+<!-- 네이버 광고 로그분석 -->
+<!-- 공통 적용 스크립트 , 모든 페이지에 노출되도록 설치. 단 전환페이지 설정값보다 항상 하단에 위치해야함 -->
+<script type="text/javascript" src="//wcs.naver.net/wcslog.js"> </script>
+<script type="text/javascript">
+    // console.log("##########################################");
+    // console.log("##########################################");
+    // console.log("네이버 광고 로그 분석 공통 스크립트 실행");
+    // console.log("script_common.jsp");
+    // console.log("##########################################");
+    // console.log("##########################################");
+    if (!wcs_add) var wcs_add={};
+    wcs_add["wa"] = "s_585b06516861";
+    if (!_nasa) var _nasa={};
+    if(window.wcs){
+        wcs.inflow("melon.com");
+        wcs_do(_nasa);
+    }
+</script>
+<!-- END 네이버 광고 로그분석 -->
+<link rel="stylesheet" type="text/css" href="//cdnticket.melon.co.kr/resource/style/web/common/onestop_map-9b67a82c75.css">
+<script src="/resource/script/web/common/iscroll-zoom-custom.js?t=201805101200"></script>
+<script src="/resource/script/web/common/iscroll5-ie8.js?t=201805101200"></script>
+<script src="/resource/script/seat/raphael_custom.js?t=201904161200"></script>
+<script src="/resource/script/seat/EzSeatZoneIdx.js?t=202409021744"></script>
+<script src="/resource/script/seat/EzCusObject.js?t=201805101200"></script>
+<script src="/resource/script/seat/EzZMSeatCus.js?t=202411051200"></script>
+<script src="/resource/script/seat/EzSeatCusIdx.js?t=202404221150"></script>
+<script src="/resource/script/seat/SeatUtil.js"></script>
+<script type="text/javascript">
+  var brCheck = false;
+  var myScroll;
+  var myScroll_minimap;
+  var sScrollgrade;
+  var sscrollblock;
+  var zoomFactor = 0.4;
+  var zoomFactor_minimap = 1.2;
+  
+  function loaded() {
+      
+      myScroll = new IScroll('#wrapper', { 
+          zoom: true,
+          zoomMax:10,
+          probType:1,
+          HWCompositing:false,
+          tab:true,
+          freeScroll: true,
+          scrollX: true,
+          scrollY: true,
+          mouseWheel: true,
+          scrollbars: true,
+          bounce: false,
+          interactiveScrollbars: true,
+          fadeScrollbars: false,
+          indicators: {
+              el: '#minimap',
+              shrink: 'scale',
+              interactive: true
+          },
+          wheelAction: 'zoom'
+    });
+      
+    myScroll_minimap = new IScroll('#minimap_scroller', { 
+          zoom: true,
+          zoomMax:10,
+          probType:1,
+          HWCompositing:false,
+          tab:true,
+          freeScroll: true,
+          scrollX: true,
+          scrollY: true,
+          mouseWheel: true,
+          scrollbars: true,
+          bounce: false,
+          interactiveScrollbars: true,
+          fadeScrollbars: false,
+          indicators: {
+              el: '#minimap',
+              shrink: 'scale',
+              interactive: true
+          },
+          wheelAction: 'zoom'
+    }); 
+      
+}
+  
+$('#wrapper').on("touchmove", function (ev) {
+    var e = ev.originalEvent;
+    if (e.preventDefault) {
+        e.preventDefault();
+    } else {
+        e.returnValue = false;
+    }
+});
+</script>
+<!--[if IE 8]>
+<script src="/resource/script/seat/raphael-custom.js?t=201904161200"></script>
+<script type="text/javascript">
+brCheck = true;
+$(function(){
+    $('#wrapper').bind('mousedown', function(e){
+        e.preventDefault();
+        $(this).data({'drag':1, 'x':e.pageX, 'y':e.pageY});
+        $(this).css({'cursor':'move'});
+    }).bind('mousemove', function(e) {
+        var sc = $('#scroller');
+        if ($(this).data('drag') == 1) {
+            dX = e.pageX - $(this).data('x');
+            dY = e.pageY - $(this).data('y');
+            dT = parseFloat(sc.css('top'))+dY;
+            dL = parseFloat(sc.css('left'))+dX;
+            sc.css({'top':dT, 'left':dL});
+            $(this).data({'x':e.pageX, 'y':e.pageY});
+        };
+    }).bind('drag', function(e) {
+        e.preventDefault();
+    }).bind('mouseup', function(e){
+        $(this).removeData('drag');
+        $(this).css({'cursor':'auto'});
+    });
+});
+</script>
+<![endif]-->
+<div class="section_onestop">
+    <div class="wrap_select"><!--좌석선택  영역-->
+        <div class="box_seat_top">
+            <h3 class="tit_seat">좌석 선택<span class="tit_s txt_prod_name" title="아야츠노 유니 1st solo concert “Christmas On The Merry Go Round”">아야츠노 유니 1st solo concert “Christmas On The Merry Go Round”</span>
+                <span class="seat_wrap_sel">
+                    <!-- 셀렉트박스 -->
+                    <select id="scheduleNo" name="scheduleNo" class="sel_cate" onchange="selectSchedule(this.value);"><option value="100001" selected="selected">2024.12.21 (토) 18:00</option></select>
+                </span>
+            </h3>   
+        </div>
+        <div class="wrap_seat"><!-- 좌석영역-->
+            <div class="box_stage" style="display: none;"><!-- 구역설명-->
+                <div class="stage"><span>무대방향 (STAGE)</span></div>
+                <div class="txt_stage">현재 보고 계신 구역은 <span class="area"></span> <span id="areaName"></span>입니다.</div>   
+            </div>
+	        <div class="stage_img">
+	            <div id="wrapper" style="width: 682px; height: 602px;">
+	                <div id="scroller" style="transform-origin: 0px 0px; transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(0px, 0px) scale(1); width: 682px; height: 602px;">
+	                  <div class="seat_block" id="ez_canvas_zone" style="width: 682px; height: 602px;"><svg height="1204" version="1.1" width="1364" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="overflow: hidden; position: relative; background-color: rgb(244, 244, 244);" viewBox="0 0 2950 3124.0000000000005" preserveAspectRatio="xMidYMid meet"><image x="0" y="0" width="2950" height="2840" preserveAspectRatio="none" xlink:href="https://cdnticket.melon.co.kr/resource/image/upload/seat/2024/11/202411111559208eadd936-edc3-4fa6-b96e-67e12c4ea923.svg" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></image><desc style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Created with Raphaël 2.1.2</desc><defs style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></defs><rect x="2396.324074074074" y="1601.8629629629618" width="112.26296196296266" height="408.4203703703704" rx="0" ry="0" fill="#f4f4f4" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); display: none;"></rect><rect x="634.675925925926" y="793.7703703703704" width="817.6518518518512" height="620.8407407407408" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1486.874074074074" y="793.9222222222223" width="834.4722222222222" height="623.9037037037035" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="635.6370370370366" y="1456.0407407407408" width="816.2388888888886" height="617.8574074074073" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1487.1962962962962" y="1456.8685185185182" width="833.8777777777776" height="619.8314814814814" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><path fill="#bea886" stroke="#000000" d="M2683.903838195737,756.0064997672716L2684.6283519553067,858.0383170423564L2515.8166459755835,858.7776780371034L2515.8166459755835,755.2671387725247L2399.8944444444433,754.5277777777777L2401.343471963583,1166.3518518518517L2918.6462962962964,1166.3518518518517L2917.9217825367264,756.7458607620187L2683.903838195737,756.0064997672716Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); display: none;"></path><text x="2660.817214471321" y="1026.572731256167" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">F</tspan></text><path fill="#bea886" stroke="#000000" d="M2517.07037037037,1603.611111111111L2920.8481481481476,1603.611111111111L2920.116666666666,2011.7777777777776L2678.727777777777,2011.046296296296L2678.727777777777,1918.148148148148L2517.07037037037,1918.148148148148L2517.07037037037,1603.611111111111Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="2718.858380494293" y="1809.2634719969067" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">D</tspan></text><path fill="#bea886" stroke="#000000" d="M2397.7370370370377,2349.277839900604L2608.2543043043047,2547.2833333333338L2917.0129629629637,2024.2814814814815L2679.252284637579,2025.1169476984974L2677.6011688158756,2102.8153058809608L2509.187355002062,2103.6507720979766L2509.187355002062,2024.2814814814815L2398.5625949478895,2024.2814814814815L2397.7370370370377,2349.277839900604Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="2587.538326178655" y="2291.8171757006107" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C</tspan></text><path fill="#bea886" stroke="#000000" d="M1975.7592592592584,2342.3353618636297L1976.5907407407399,2807.3813931422583L2446.377777777777,2808.207407407406L2617.6629629629615,2617.398112158093L2310.8462962962953,2340.683333333332L1975.7592592592584,2342.3353618636297Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="2223.372055788392" y="2594.38754607098" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B</tspan></text><path fill="#bea886" stroke="#000000" d="M1583.4111111111115,2449.7235649992613L1583.4111111111115,2603.9084034233424L1487.4685185185187,2604.831665928876L1486.5370370370374,2805.179629629629L1954.1407407407407,2805.179629629629L1954.1407407407407,2341.7018518518507L1487.4685185185187,2341.7018518518507L1488.4000000000003,2449.7235649992613L1583.4111111111115,2449.7235649992613Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="1747.3702651977542" y="2590.841249774684" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A</tspan></text><path fill="#bea886" stroke="#000000" d="M1345.9462995565978,2452.1449057598506L1345.9462995565978,2605.1582180044793L1463.9037037037021,2605.1582180044793L1463.0671263693255,2805.3161724001557L990.4009324465303,2806.970370370368L988.7277777777771,2342.140740740739L1461.3939717005721,2342.9678397258454L1462.230549034949,2452.1449057598506L1345.9462995565978,2452.1449057598506Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="1193.8419539840122" y="2596.267175700609" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">N</tspan></text><path fill="#bea886" stroke="#000000" d="M352.85370370370316,2612.8237972848265L501.0568733153633,2806.351851851849L970.6444444444437,2806.351851851849L970.6444444444437,2341.5537037037016L653.4230533093734,2341.5537037037016L352.85370370370316,2612.8237972848265Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="744.3437947308569" y="2611.328286811719" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">M</tspan></text><path fill="#bea886" stroke="#000000" d="M31.370370370369812,2030.5499999999968L350.2566278534299,2546.590740740737L553.2685185185178,2352.842592592589L552.3415235839739,2029.6185185185152L440.1751365041766,2029.6185185185152L440.1751365041766,2108.794444444441L281.65900269719026,2108.794444444441L281.65900269719026,2030.5499999999968L31.370370370369812,2030.5499999999968Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="380.51165891576613" y="2286.4375460709784" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">L</tspan></text><path fill="#bea886" stroke="#000000" d="M28.664814814814655,1608.3925925925896L28.664814814814655,2014.1555555555524L284.7611111111108,2014.1555555555524L283.9296296296293,1922.6925925925893L440.2481481481477,1923.524074074071L440.2481481481477,2015.8185185185152L553.3296296296292,2016.6499999999967L552.4981481481476,1607.5611111111082L28.664814814814655,1608.3925925925896Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="290.32348858868613" y="1813.9560645894971" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">K</tspan></text><path fill="#bea886" stroke="#000000" d="M28.611296812132398,760.5814814814786L27.877777777777723,1168.0166666666635L554.5444444444441,1169.4796296296265L554.5444444444441,760.5814814814786L443.0495512225314,761.3129629629601L443.0495512225314,860.7944444444415L284.6094398019187,860.06296296296L286.076477870628,761.3129629629601L28.611296812132398,760.5814814814786Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="291.19106044769245" y="1028.3449534783856" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">I</tspan></text><rect x="2401.122222222222" y="1181.8888888888891" width="108.85370370370401" height="402.5055555555555" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><path fill="#bea886" stroke="#000000" d="M2530.6277777777773,1181.488888888889L2533.159259259259,1318.188888888889L2679.985185185185,1318.188888888889L2679.985185185185,1457.4203703703706L2530.6277777777773,1457.4203703703706L2530.6277777777773,1586.525925925926L2915.412962962963,1586.525925925926L2915.412962962963,1181.488888888889L2528.0962962962963,1181.488888888889L2530.6277777777773,1181.488888888889Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="453.4907407407409" y="1183.624074074074" width="99.5462962962963" height="405.8425925925927" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><path fill="#bea886" stroke="#000000" d="M32.933333333333486,1181.4925925925925L32.933333333333486,1590.3981481481483L435.71296296296316,1590.3981481481483L435.71296296296316,1455.6277777777777L284.0962962962965,1454.0962962962963L284.0962962962965,1311.6685185185183L432.6500000000002,1313.1999999999998L432.6500000000002,1183.024074074074L32.933333333333486,1181.4925925925925L32.933333333333486,1181.4925925925925Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="2777.1537180723967" y="1419.0022983497759" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">E</tspan></text><text x="176.05238041347943" y="1417.9708794043152" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">J</tspan></text><text x="1048.889874988133" y="1141.876434959872" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">1</tspan></text><text x="1897.8785657388203" y="1138.1245831080196" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">2</tspan></text><text x="1037.3841212943757" y="1793.3634719969084" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">3</tspan></text><text x="1905.7730101832647" y="1798.6264349598712" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">4</tspan></text><rect x="2396.324074074074" y="1601.8629629629618" width="112.26296196296266" height="408.4203703703704" rx="0" ry="0" fill="#f4f4f4" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><rect x="634.675925925926" y="793.7703703703704" width="817.6518518518512" height="620.8407407407408" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><rect x="1486.874074074074" y="793.9222222222223" width="834.4722222222222" height="623.9037037037035" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><rect x="635.6370370370366" y="1456.0407407407408" width="816.2388888888886" height="617.8574074074073" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><rect x="1487.1962962962962" y="1456.8685185185182" width="833.8777777777776" height="619.8314814814814" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><path fill="#bea886" stroke="#000000" d="M2683.903838195737,756.0064997672716L2684.6283519553067,858.0383170423564L2515.8166459755835,858.7776780371034L2515.8166459755835,755.2671387725247L2399.8944444444433,754.5277777777777L2401.343471963583,1166.3518518518517L2918.6462962962964,1166.3518518518517L2917.9217825367264,756.7458607620187L2683.903838195737,756.0064997672716Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M2517.07037037037,1603.611111111111L2920.8481481481476,1603.611111111111L2920.116666666666,2011.7777777777776L2678.727777777777,2011.046296296296L2678.727777777777,1918.148148148148L2517.07037037037,1918.148148148148L2517.07037037037,1603.611111111111Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"><title style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">잔여 128석</title></path><path fill="#bea886" stroke="#000000" d="M2397.7370370370377,2349.277839900604L2608.2543043043047,2547.2833333333338L2917.0129629629637,2024.2814814814815L2679.252284637579,2025.1169476984974L2677.6011688158756,2102.8153058809608L2509.187355002062,2103.6507720979766L2509.187355002062,2024.2814814814815L2398.5625949478895,2024.2814814814815L2397.7370370370377,2349.277839900604Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"><title style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">잔여 126석</title></path><path fill="#bea886" stroke="#000000" d="M1975.7592592592584,2342.3353618636297L1976.5907407407399,2807.3813931422583L2446.377777777777,2808.207407407406L2617.6629629629615,2617.398112158093L2310.8462962962953,2340.683333333332L1975.7592592592584,2342.3353618636297Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M1583.4111111111115,2449.7235649992613L1583.4111111111115,2603.9084034233424L1487.4685185185187,2604.831665928876L1486.5370370370374,2805.179629629629L1954.1407407407407,2805.179629629629L1954.1407407407407,2341.7018518518507L1487.4685185185187,2341.7018518518507L1488.4000000000003,2449.7235649992613L1583.4111111111115,2449.7235649992613Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M1345.9462995565978,2452.1449057598506L1345.9462995565978,2605.1582180044793L1463.9037037037021,2605.1582180044793L1463.0671263693255,2805.3161724001557L990.4009324465303,2806.970370370368L988.7277777777771,2342.140740740739L1461.3939717005721,2342.9678397258454L1462.230549034949,2452.1449057598506L1345.9462995565978,2452.1449057598506Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M352.85370370370316,2612.8237972848265L501.0568733153633,2806.351851851849L970.6444444444437,2806.351851851849L970.6444444444437,2341.5537037037016L653.4230533093734,2341.5537037037016L352.85370370370316,2612.8237972848265Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M31.370370370369812,2030.5499999999968L350.2566278534299,2546.590740740737L553.2685185185178,2352.842592592589L552.3415235839739,2029.6185185185152L440.1751365041766,2029.6185185185152L440.1751365041766,2108.794444444441L281.65900269719026,2108.794444444441L281.65900269719026,2030.5499999999968L31.370370370369812,2030.5499999999968Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M28.664814814814655,1608.3925925925896L28.664814814814655,2014.1555555555524L284.7611111111108,2014.1555555555524L283.9296296296293,1922.6925925925893L440.2481481481477,1923.524074074071L440.2481481481477,2015.8185185185152L553.3296296296292,2016.6499999999967L552.4981481481476,1607.5611111111082L28.664814814814655,1608.3925925925896Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M28.611296812132398,760.5814814814786L27.877777777777723,1168.0166666666635L554.5444444444441,1169.4796296296265L554.5444444444441,760.5814814814786L443.0495512225314,761.3129629629601L443.0495512225314,860.7944444444415L284.6094398019187,860.06296296296L286.076477870628,761.3129629629601L28.611296812132398,760.5814814814786Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><rect x="2401.122222222222" y="1181.8888888888891" width="108.85370370370401" height="402.5055555555555" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><path fill="#bea886" stroke="#000000" d="M2530.6277777777773,1181.488888888889L2533.159259259259,1318.188888888889L2679.985185185185,1318.188888888889L2679.985185185185,1457.4203703703706L2530.6277777777773,1457.4203703703706L2530.6277777777773,1586.525925925926L2915.412962962963,1586.525925925926L2915.412962962963,1181.488888888889L2528.0962962962963,1181.488888888889L2530.6277777777773,1181.488888888889Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><rect x="453.4907407407409" y="1183.624074074074" width="99.5462962962963" height="405.8425925925927" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><path fill="#bea886" stroke="#000000" d="M32.933333333333486,1181.4925925925925L32.933333333333486,1590.3981481481483L435.71296296296316,1590.3981481481483L435.71296296296316,1455.6277777777777L284.0962962962965,1454.0962962962963L284.0962962962965,1311.6685185185183L432.6500000000002,1313.1999999999998L432.6500000000002,1183.024074074074L32.933333333333486,1181.4925925925925L32.933333333333486,1181.4925925925925Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path></svg></div>
+	                  <div id="ez_canvas" style="width: 682px; height: 526px; display: none;"><svg height="526" version="1.1" width="682" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="415.1444444444446 491.55925925925925 2256.333333333331 1505.732499999997" preserveAspectRatio="xMidYMin meet" style="overflow: hidden; position: relative; background-color: rgb(244, 244, 244);"><desc style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Created with Raphaël 2.1.2</desc><defs style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></defs><rect x="620.885185185185" y="491.55925925925925" width="266.60555555555567" height="254.29074074073992" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="626.203703703707" y="1072.6518518518494" width="266.6000000000004" height="254.67592592592612" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1292.5018518518498" y="1579.979629629628" width="241.8148148148142" height="219.17777777777772" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1542.4481481481475" y="1580.9907407407384" width="241.73703703703708" height="219.3111111111111" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="2180.36111111111" y="805.4037037037067" width="281.40740740740756" height="254.3740740740735" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="893.4203703703705" y="1580.229629629628" width="392" height="223" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="2181.8407407407412" y="520.7518518518523" width="275" height="262" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="2206.0648148148143" y="1070.7129629629628" width="250.34814814814808" height="49.47037037037007" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="2185.9703703703694" y="1129.4814814814813" width="275" height="249" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="606.2944444444444" y="775.9111111111114" width="288" height="249" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="606.2944444444444" y="816.303703703704" width="132" height="15" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1102.6648148148147" y="639.1666666666664" width="392" height="288" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1550.74074074074" y="640.6703703703697" width="392" height="288" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1102.3888888888887" y="984.1962962962959" width="392" height="288" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1551.3722222222227" y="986.722222222222" width="392" height="288" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="2231.477777777776" y="1423.707407407407" width="405" height="236" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1805.512962962963" y="1580.964814814815" width="405" height="223" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="455.1444444444447" y="1370.1833333333334" width="405" height="236" rx="0" ry="0" fill="none" stroke="#000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect></svg></div>
+	                </div>
+	            <div class="iScrollVerticalScrollbar iScrollLoneScrollbar" style="position: absolute; z-index: 9999; width: 7px; bottom: 2px; top: 2px; right: 1px; overflow: hidden;"><div class="iScrollIndicator" style="box-sizing: border-box; position: absolute; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 3px; width: 100%; transition-duration: 0ms; display: none; transform: translate(0px, 0px); transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1);"></div></div><div class="iScrollHorizontalScrollbar iScrollLoneScrollbar" style="position: absolute; z-index: 9999; height: 7px; left: 2px; right: 2px; bottom: 0px; overflow: hidden;"><div class="iScrollIndicator" style="box-sizing: border-box; position: absolute; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 3px; height: 100%; transition-duration: 0ms; display: none; transform: translate(0px, 0px); transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1);"></div></div></div>
+	            <div class="wrap_seat_box">
+		            <div class="seat_box "><!-- on class 컨트롤 -->
+		                <div class="seat_btn" id="txtSelectSeatInfo" onclick="$(this).parent().toggleClass('open');return false;"><span>구역을 먼저 선택해주세요<span class="txt_seat_s">(화면을 직접 선택하거나 우측 좌석등급을 선택해주세요)</span></span></div>
+		                <div class="seat_choice">
+		                    <ul id="partSeatSelected" class="seat_info">
+		                    </ul>
+		                </div><!-- //seat_choice끝 -->
+		            </div>
+	            </div>
+	        </div>
+        </div><!--// 좌석영역-->
+    </div><!--// 좌석선택  영역-->
+    <div class="wrap_ticket_info"><!--티켓 정보 영역-->
+        <h2 class="logo_onestop"><a href="#none"><img src="https://cdnticket.melon.co.kr/resource/image/web/onestop/logo_onestop.png" alt="Melon 티켓"></a></h2>
+        <div class="box_info box_map">
+            <div>
+	            <div class="minimap_scroller" id="minimap_scroller">
+		            <div class="map_seat" style="transform-origin: 0px 0px; transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(0px, 0px) scale(1);">
+		            	<div id="iez_canvas"><svg height="900" version="1.1" width="1225" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="overflow: hidden; position: relative; background-color: rgb(244, 244, 244);" viewBox="0 0 2950 2840" preserveAspectRatio="xMidYMid meet"><desc style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Created with Raphaël 2.1.2</desc><defs style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></defs><image x="0" y="0" width="2950" height="2840" preserveAspectRatio="none" xlink:href="https://cdnticket.melon.co.kr/resource/image/upload/seat/2024/11/20241111155923cca9f1a3-aa5c-4265-999c-b97f05a497c3.jpg" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);" stroke-width="1"></image><rect x="2396.324074074074" y="1601.8629629629618" width="112.26296196296266" height="408.4203703703704" rx="0" ry="0" fill="#f4f4f4" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); display: none;"></rect><rect x="634.675925925926" y="793.7703703703704" width="817.6518518518512" height="620.8407407407408" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1486.874074074074" y="793.9222222222223" width="834.4722222222222" height="623.9037037037035" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="635.6370370370366" y="1456.0407407407408" width="816.2388888888886" height="617.8574074074073" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="1487.1962962962962" y="1456.8685185185182" width="833.8777777777776" height="619.8314814814814" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><path fill="#bea886" stroke="#000000" d="M2683.903838195737,756.0064997672716L2684.6283519553067,858.0383170423564L2515.8166459755835,858.7776780371034L2515.8166459755835,755.2671387725247L2399.8944444444433,754.5277777777777L2401.343471963583,1166.3518518518517L2918.6462962962964,1166.3518518518517L2917.9217825367264,756.7458607620187L2683.903838195737,756.0064997672716Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); display: none;"></path><text x="2666.4259238066484" y="1032.3730597453766" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">F</tspan></text><path fill="#bea886" stroke="#000000" d="M2517.07037037037,1603.611111111111L2920.8481481481476,1603.611111111111L2920.116666666666,2011.7777777777776L2678.727777777777,2011.046296296296L2678.727777777777,1918.148148148148L2517.07037037037,1918.148148148148L2517.07037037037,1603.611111111111Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="2721.4907390453186" y="1815.0638004861164" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">D</tspan></text><path fill="#bea886" stroke="#000000" d="M2397.7370370370377,2349.277839900604L2608.2543043043047,2547.2833333333338L2917.0129629629637,2024.2814814814815L2679.252284637579,2025.1169476984974L2677.6011688158756,2102.8153058809608L2509.187355002062,2103.6507720979766L2509.187355002062,2024.2814814814815L2398.5625949478895,2024.2814814814815L2397.7370370370377,2349.277839900604Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="2595.5222205267996" y="2297.6175041898205" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C</tspan></text><path fill="#bea886" stroke="#000000" d="M1975.7592592592584,2342.3353618636297L1976.5907407407399,2807.3813931422583L2446.377777777777,2808.207407407406L2617.6629629629615,2617.398112158093L2310.8462962962953,2340.683333333332L1975.7592592592584,2342.3353618636297Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="2223.5481460288706" y="2600.18787456019" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B</tspan></text><path fill="#bea886" stroke="#000000" d="M1583.4111111111115,2449.7235649992613L1583.4111111111115,2603.9084034233424L1487.4685185185187,2604.831665928876L1486.5370370370374,2805.179629629629L1954.1407407407407,2805.179629629629L1954.1407407407407,2341.7018518518507L1487.4685185185187,2341.7018518518507L1488.4000000000003,2449.7235649992613L1583.4111111111115,2449.7235649992613Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="1755.7833282470706" y="2596.6415782638937" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A</tspan></text><path fill="#bea886" stroke="#000000" d="M1345.9462995565978,2452.1449057598506L1345.9462995565978,2605.1582180044793L1463.9037037037021,2605.1582180044793L1463.0671263693255,2805.3161724001557L990.4009324465303,2806.970370370368L988.7277777777771,2342.140740740739L1461.3939717005721,2342.9678397258454L1462.230549034949,2452.1449057598506L1345.9462995565978,2452.1449057598506Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="1193.8796279342075" y="2602.067504189819" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">N</tspan></text><path fill="#bea886" stroke="#000000" d="M352.85370370370316,2612.8237972848265L501.0568733153633,2806.351851851849L970.6444444444437,2806.351851851849L970.6444444444437,2341.5537037037016L653.4230533093734,2341.5537037037016L352.85370370370316,2612.8237972848265Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="744.329047111228" y="2617.1286153009287" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">M</tspan></text><path fill="#bea886" stroke="#000000" d="M31.370370370369812,2030.5499999999968L350.2566278534299,2546.590740740737L553.2685185185178,2352.842592592589L552.3415235839739,2029.6185185185152L440.1751365041766,2029.6185185185152L440.1751365041766,2108.794444444441L281.65900269719026,2108.794444444441L281.65900269719026,2030.5499999999968L31.370370370369812,2030.5499999999968Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="386.1203682510933" y="2292.237874560188" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">L</tspan></text><path fill="#bea886" stroke="#000000" d="M28.664814814814655,1608.3925925925896L28.664814814814655,2014.1555555555524L284.7611111111108,2014.1555555555524L283.9296296296293,1922.6925925925893L440.2481481481477,1923.524074074071L440.2481481481477,2015.8185185185152L553.3296296296292,2016.6499999999967L552.4981481481476,1607.5611111111082L28.664814814814655,1608.3925925925896Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="296.0370353416158" y="1819.7563930787069" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">K</tspan></text><path fill="#bea886" stroke="#000000" d="M28.611296812132398,760.5814814814786L27.877777777777723,1168.0166666666635L554.5444444444441,1169.4796296296265L554.5444444444441,760.5814814814786L443.0495512225314,761.3129629629601L443.0495512225314,860.7944444444415L284.6094398019187,860.06296296296L286.076477870628,761.3129629629601L28.611296812132398,760.5814814814786Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="291.9277767181392" y="1034.1452819675953" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">I</tspan></text><rect x="2401.122222222222" y="1181.8888888888891" width="108.85370370370401" height="402.5055555555555" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><path fill="#bea886" stroke="#000000" d="M2530.6277777777773,1181.488888888889L2533.159259259259,1318.188888888889L2679.985185185185,1318.188888888889L2679.985185185185,1457.4203703703706L2530.6277777777773,1457.4203703703706L2530.6277777777773,1586.525925925926L2915.412962962963,1586.525925925926L2915.412962962963,1181.488888888889L2528.0962962962963,1181.488888888889L2530.6277777777773,1181.488888888889Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="453.4907407407409" y="1183.624074074074" width="99.5462962962963" height="405.8425925925927" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><path fill="#bea886" stroke="#000000" d="M32.933333333333486,1181.4925925925925L32.933333333333486,1590.3981481481483L435.71296296296316,1590.3981481481483L435.71296296296316,1455.6277777777777L284.0962962962965,1454.0962962962963L284.0962962962965,1311.6685185185183L432.6500000000002,1313.1999999999998L432.6500000000002,1183.024074074074L32.933333333333486,1181.4925925925925L32.933333333333486,1181.4925925925925Z" stroke-width="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><text x="2782.2759238066496" y="1424.8026893750064" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">E</tspan></text><text x="186.56666454739056" y="1423.771207893525" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">J</tspan></text><text x="1048.8628459506574" y="1147.6767634490818" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">1</tspan></text><text x="1900.8925904733173" y="1143.9249115972293" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">2</tspan></text><text x="1040.3981460288728" y="1799.1638004861181" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">3</tspan></text><text x="1916.6759242305059" y="1804.426763449081" text-anchor="middle" font-family="Malgun Gothic" font-size="100px" font-style="normal" font-weight="bold" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Malgun Gothic&quot;; font-size: 100px; font-style: normal; font-weight: bold;" stroke-width="1"><tspan dy="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">4</tspan></text><rect x="2396.324074074074" y="1601.8629629629618" width="112.26296196296266" height="408.4203703703704" rx="0" ry="0" fill="#f4f4f4" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><rect x="634.675925925926" y="793.7703703703704" width="817.6518518518512" height="620.8407407407408" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><rect x="1486.874074074074" y="793.9222222222223" width="834.4722222222222" height="623.9037037037035" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><rect x="635.6370370370366" y="1456.0407407407408" width="816.2388888888886" height="617.8574074074073" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><rect x="1487.1962962962962" y="1456.8685185185182" width="833.8777777777776" height="619.8314814814814" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><path fill="#bea886" stroke="#000000" d="M2683.903838195737,756.0064997672716L2684.6283519553067,858.0383170423564L2515.8166459755835,858.7776780371034L2515.8166459755835,755.2671387725247L2399.8944444444433,754.5277777777777L2401.343471963583,1166.3518518518517L2918.6462962962964,1166.3518518518517L2917.9217825367264,756.7458607620187L2683.903838195737,756.0064997672716Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M2517.07037037037,1603.611111111111L2920.8481481481476,1603.611111111111L2920.116666666666,2011.7777777777776L2678.727777777777,2011.046296296296L2678.727777777777,1918.148148148148L2517.07037037037,1918.148148148148L2517.07037037037,1603.611111111111Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M2397.7370370370377,2349.277839900604L2608.2543043043047,2547.2833333333338L2917.0129629629637,2024.2814814814815L2679.252284637579,2025.1169476984974L2677.6011688158756,2102.8153058809608L2509.187355002062,2103.6507720979766L2509.187355002062,2024.2814814814815L2398.5625949478895,2024.2814814814815L2397.7370370370377,2349.277839900604Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M1975.7592592592584,2342.3353618636297L1976.5907407407399,2807.3813931422583L2446.377777777777,2808.207407407406L2617.6629629629615,2617.398112158093L2310.8462962962953,2340.683333333332L1975.7592592592584,2342.3353618636297Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M1583.4111111111115,2449.7235649992613L1583.4111111111115,2603.9084034233424L1487.4685185185187,2604.831665928876L1486.5370370370374,2805.179629629629L1954.1407407407407,2805.179629629629L1954.1407407407407,2341.7018518518507L1487.4685185185187,2341.7018518518507L1488.4000000000003,2449.7235649992613L1583.4111111111115,2449.7235649992613Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M1345.9462995565978,2452.1449057598506L1345.9462995565978,2605.1582180044793L1463.9037037037021,2605.1582180044793L1463.0671263693255,2805.3161724001557L990.4009324465303,2806.970370370368L988.7277777777771,2342.140740740739L1461.3939717005721,2342.9678397258454L1462.230549034949,2452.1449057598506L1345.9462995565978,2452.1449057598506Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M352.85370370370316,2612.8237972848265L501.0568733153633,2806.351851851849L970.6444444444437,2806.351851851849L970.6444444444437,2341.5537037037016L653.4230533093734,2341.5537037037016L352.85370370370316,2612.8237972848265Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M31.370370370369812,2030.5499999999968L350.2566278534299,2546.590740740737L553.2685185185178,2352.842592592589L552.3415235839739,2029.6185185185152L440.1751365041766,2029.6185185185152L440.1751365041766,2108.794444444441L281.65900269719026,2108.794444444441L281.65900269719026,2030.5499999999968L31.370370370369812,2030.5499999999968Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M28.664814814814655,1608.3925925925896L28.664814814814655,2014.1555555555524L284.7611111111108,2014.1555555555524L283.9296296296293,1922.6925925925893L440.2481481481477,1923.524074074071L440.2481481481477,2015.8185185185152L553.3296296296292,2016.6499999999967L552.4981481481476,1607.5611111111082L28.664814814814655,1608.3925925925896Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><path fill="#bea886" stroke="#000000" d="M28.611296812132398,760.5814814814786L27.877777777777723,1168.0166666666635L554.5444444444441,1169.4796296296265L554.5444444444441,760.5814814814786L443.0495512225314,761.3129629629601L443.0495512225314,860.7944444444415L284.6094398019187,860.06296296296L286.076477870628,761.3129629629601L28.611296812132398,760.5814814814786Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><rect x="2401.122222222222" y="1181.8888888888891" width="108.85370370370401" height="402.5055555555555" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><path fill="#bea886" stroke="#000000" d="M2530.6277777777773,1181.488888888889L2533.159259259259,1318.188888888889L2679.985185185185,1318.188888888889L2679.985185185185,1457.4203703703706L2530.6277777777773,1457.4203703703706L2530.6277777777773,1586.525925925926L2915.412962962963,1586.525925925926L2915.412962962963,1181.488888888889L2528.0962962962963,1181.488888888889L2530.6277777777773,1181.488888888889Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path><rect x="453.4907407407409" y="1183.624074074074" width="99.5462962962963" height="405.8425925925927" rx="0" ry="0" fill="#bea886" stroke="#000000" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></rect><path fill="#bea886" stroke="#000000" d="M32.933333333333486,1181.4925925925925L32.933333333333486,1590.3981481481483L435.71296296296316,1590.3981481481483L435.71296296296316,1455.6277777777777L284.0962962962965,1454.0962962962963L284.0962962962965,1311.6685185185183L432.6500000000002,1313.1999999999998L432.6500000000002,1183.024074074074L32.933333333333486,1181.4925925925925L32.933333333333486,1181.4925925925925Z" stroke-width="0" opacity="0" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); opacity: 0;"></path></svg></div>
+		            </div>
+	            <div class="iScrollVerticalScrollbar iScrollLoneScrollbar" style="position: absolute; z-index: 9999; width: 7px; bottom: 2px; top: 2px; right: 1px; overflow: hidden;"><div class="iScrollIndicator" style="box-sizing: border-box; position: absolute; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 3px; width: 100%; transition-duration: 0ms; display: none; transform: translate(0px, 0px); transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1);"></div></div><div class="iScrollHorizontalScrollbar iScrollLoneScrollbar" style="position: absolute; z-index: 9999; height: 7px; left: 2px; right: 2px; bottom: 0px; overflow: hidden;"><div class="iScrollIndicator" style="box-sizing: border-box; position: absolute; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 3px; height: 100%; transition-duration: 0ms; display: none; transform: translate(0px, 0px); transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1);"></div></div></div>
+	            <!-- 미니맵 확대 축소 버튼 -->
+                <div class="map_btn">
+                	<a href="#" class="btn_plus" id="btn_map_p">확대</a>
+                    <a href="#" class="btn_minus" id="btn_map_m">축소</a>
+                </div>
+                <!-- //미니맵 확대 축소 버튼 -->
+                <div>
+                    <div id="minimap" class=" iScrollLoneScrollbar">
+                        <div id="minimap-indicator" style="transition-duration: 0ms; display: none; transform: translate(0px, 0px); transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); visibility: hidden;"></div>
+                    </div>
+                </div>
+                <div class="view_seat">
+                    <span class="btn_view"><a href="#" id="viewAll">좌석도 전체보기</a></span><span class="onbtn_arr">전체보기</span>
+                </div>
+            </div>  
+        </div>
+        <div class="wrap_seat_list ">           
+            <div class="seat_list"><!-- 구역 좌석등급/잔여석-->
+                <h3 class="select_tit">좌석등급/잔여석<span class="ico_info" onmouseover="toolTip('layer_ticket');">유의사항</span><a href="#none" id="btnReloadSchedule" class="btn_flexible btn_flexible_ico2 btn_detail"><span>새로고침</span></a></h3>
+                <div class="box_seat">
+                    <div class="box_seat_inner box_seat_area"><!--구역좌석 선택시-->
+                        <table class="tbl">
+                            <caption class="hide"></caption>
+                            <colgroup>
+                                <col style="width:26px;">
+                                <col>
+                                <col style="width:58px;">
+                                <col style="width:45px;">
+                                <col style="width:25px;">
+                            </colgroup>
+                            <tbody id="divGradeSummary"><tr id="gd10009" onclick="goSummary(this, '10009','1,1;1,2;1,3;1,4;2,A;2,B;2,C;2,D;2,E;2,I;2,J;2,K;2,L;2,M;2,N');" onmouseover="viewGradeZone('1,1;1,2;1,3;1,4;2,A;2,B;2,C;2,D;2,E;2,I;2,J;2,K;2,L;2,M;2,N')" onmouseout="viewLastGradeZone()"><th class="seat_color"><em class="seat_color seat_vip" style="background-color:#BEA886"></em></th><td class="seat_name">전석</td><td class="price">120,000원</td><td class="seat_remain"></td><td class="area_info">좌석보기</td></tr><tr class="box_list_area"><td colspan="5"><div class="list_area"><ul><li>1</li></ul></div></td></tr></tbody>
+                        </table>
+                    </div><!--// 구역좌석 선택시-->
+                </div>
+                <!--유의사항 레이어팝업-->
+                <div class="layer_ticket" id="layer_ticket" style="position:absolute;top:15px;left:0;width:238px;">
+                    <div class="layer_arr" style="left:114px;"></div>
+                    <div class="tk_header">
+                        <div class="tk_header1">
+                            <span class="tk_tit"></span>
+                        </div>                      
+                    </div>
+                    <div class="tk_middle">
+                        <div class="tk_middle1">
+                            <div>
+                                <p>좌석선택 이후 5분이내 결제가 완료되지 않을 시 선택하신 좌석의 선점 기회를 잃게 됩니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tk_footer"><div class="tk_footer1"></div></div>
+                </div><!--// 유의사항 레이어팝업-->
+            </div><!--//구역 좌석등급/잔여석-->
+        </div>  
+        <div class="box_info_bm">
+            <div class="btn_onestop">
+                <span class="button btNext"><a href="#" id="nextTicketSelection" class="btnOne btnOneB">좌석 선택 완료<em class="one_arr next_ar">다음</em></a></span>
+            </div>
+        </div>
+    </div><!--// 티켓 정보 영역 -->
+</div>
+
+<!-- ZAM-netfunnel -->
+<script type="text/javascript" src="/resource/script/web/common/netfunnel.js"></script>
+
+<script type="text/javascript">
+var clipYn = "";
+function goTicketType() {
+    var rtchk = true;
+    if (parent.data.selectedSeatCount <= 0) {
+        alert("선택된 좌석이 없습니다.");
+        rtchk = false;
+    }else {
+        var params		= parent.$("#sForm").serializeArray();
+        var chkSeatCount	= 0;
+
+        $.each(parent.seatData, function(key, val){
+            params.push({name: "seatId"              , value: val.sid});
+            params.push({name: "clipSeatId"          , value: val.csid});
+            chkSeatCount++;
+        });
+        params.push({ name : "chkcapt"    , value : Captcha.getData()});
+
+        
+        $.ajax({
+            type                : "POST"
+            , dataType          : "jsonp"
+            , url               : "/tktapi/reservation/prodlimit.json?v=1"
+            , async             : false
+            , data              : params
+            , success           : function(result) {
+                if(result.result == "0000") {
+					var cnt = 0;
+					$.each(parent.seatData, function(key, val){
+						parent.$("#sFormSub").append('<input type="hidden" id="seatIds'+cnt+'" name="seatIds" value="'+ val.sid +'">');
+						cnt++
+					});
+                	
+					var sf  = parent.document.sForm;
+					var sfs = parent.document.sFormSub;
+
+                    //encrpytedSeatIds, inter
+                    sfs.encryptedSeatIds.value = result.encryptedSeatIds;
+                    sfs.interlockTid.value = result.interlockTid;
+
+					sfs.scheduleNo.value		= sf.scheduleNo.value;
+					sfs.flplanTypeCode.value	= sf.flplanTypeCode.value;
+					sfs.seatTypeCode.value	= sf.seatTypeCode.value;
+					sfs.target        		= "oneStopFrame";
+					sfs.action        		= "/reservation/popup/stepTicket.htm";
+					sfs.submit();
+                     
+					for(var i = 0 ;i < cnt; i++){
+						parent.$("#seatIds"+i).remove(); 
+					}
+                }
+                else {
+                    if (result.code != 'T0002')          // 인증예매(캡챠) 미완료시  alert 없이 팝업만 표출하기 위함
+                        alert(result.message);
+
+                    if (result.code == "T8270" || result.code == "T8280") {
+						init_suv();
+						parent.data.selectedSeatCount = 0;
+						setSelectSeatCount(true);
+						getBlockSeatList();
+                    } else if (result.code == "T9110") {
+                        parent.rsrvPopupClose();
+                    } else if (result.code == 'T0002') {                // T0002 : 인증 미완료시
+                        parent.captchaObj.show();
+                        Captcha.setData('');
+                    }
+                }
+            }
+            , error             : function(e) {
+            		alert("다시 시도부탁드립니다.");
+            }
+        });
+    }
+}
+
+var lastZone = null;
+var lastGrade = null;
+
+function confirmChangeBlock(){
+	if( parent.data.selectedSeatCount == 0){
+		return true;
+	}else{
+    		if(confirm("현재 선택한 좌석정보를 삭제하고 이동하시겠습니까?")){
+			$("#partSeatSelected").empty();
+			return true;
+		}else{
+			return false;
+		}
+	}
+}
+function selectedBlock(blockObj, blockId, sntv, floorNo, floorName, areaNo, areaName, blockType) {	
+	if(confirmChangeBlock()){
+		$(".view_seat").attr("style","position: relative");
+		var floor_no = (floorNo==null ? "" : floorNo);
+		var floor_name = (floorName==null ? "" : floorName);
+        var area_no = (areaNo==null ? "" : areaNo);
+        var area_name = (areaName==null ? "" : areaName);
+
+		$('li').removeClass("ck");
+		$(blockObj).addClass("ck");
+		
+	    parent.$("#blockId").val(blockId);
+	    parent.$("#sntv").val(sntv);
+	    parent.$("#floorNo").val(floor_no);
+	    parent.$("#floorName").val(floor_name);
+	    parent.$("#areaNo").val(area_no);
+	    parent.$("#areaName").val(area_name);
+	    parent.$("#blockTypeCode").val(blockType);
+	    parent.$("#mapClickYn").val("N");
+	    lastZone = sntv;
+	    getBlockSeatList();
+    }
+	myScroll.zoom(0);
+	myScroll_minimap.zoom(0);
+}
+
+function viewLastGradeZone(){
+    if(lastZone == null){
+	    	SelectGradeZone(parent.$("#stvn_view_list").val());
+		fnSetidxSelectedSeatBlockList(parent.$("#stvn_view_list").val());
+    }else{
+		SelectGradeZone(lastZone);
+		fnSetidxSelectedSeatBlockList(lastZone);
+    }
+}
+function viewGradeZone(sntvList){
+	SelectGradeZone(sntvList);
+	fnSetidxSelectedSeatBlockList(sntvList);
+}
+
+function bindSummaryList(list) {
+
+    $("#divGradeSummary").empty();
+    var seatGradeNo = parent.$("#seatGradeNo").val();
+    var stvn_view_list = "";
+    var sntvList = '';
+    $.each(list, function(key, val) {
+        parent.gradeData[val.seatGradeNo] = val.seatGradeName;
+        stvn_view_list += ";"+val.sntvList;
+        if (seatGradeNo == val.seatGradeNo){
+            sntvList = val.sntvList;
+        }
+
+        var appendObj = "";
+        if(clipYn != "Y"){
+            appendObj = $("<tr id=\"gd" + val.seatGradeNo + "\" onClick=\"goSummary(this, '" + val.seatGradeNo  + "','" + val.sntvList  + "');\" onmouseover=\"viewGradeZone('" + val.sntvList + "')\"  onmouseout=\"viewLastGradeZone()\" />");
+        }else{
+            appendObj = $("<tr id=\"gd" + val.seatGradeNo + "\"  onmouseover=\"viewGradeZone('" + val.sntvList + "')\"  onmouseout=\"viewLastGradeZone()\" />");
+        }
+        appendObj.append("<th class=\"seat_color\"><em class=\"seat_color seat_vip\" style=\"background-color:" + val.gradeColorVal + "\"></em></th>")
+            .append("<td class=\"seat_name\">" + val.seatGradeName + "</td>")
+            .append("<td class=\"price\">" + addComma(val.basePrice) + "원</td>")
+            .append(parent.prodData.seatCntDisplayYn == "Y" ?"<td class=\"seat_remain\">" + addComma(val.realSeatCntlk) + "석</td>": "<td class=\"seat_remain\"></td>")
+            .append("<td class=\"area_info\">좌석보기</td>")
+            .appendTo($("#divGradeSummary"));
+        $("<tr>").addClass("box_list_area").append("<td colspan=\"5\"><div class=\"list_area\"><ul><li>1</li></ul></div></td>").appendTo($("#divGradeSummary"));
+
+    });
+
+    if(parent.$("#stvn_view_list").val()!=""){
+    }else{
+        parent.$("#stvn_view_list").val(stvn_view_list.substring(1));
+    }
+
+    if(clipYn != "Y") {
+        if (seatGradeNo != "") {
+            goSummary(null, seatGradeNo, sntvList);
+        }
+    } else {
+        $(".area_info").css("background","url()");
+        $("#txtSelectSeatInfo").html("구역을 먼저 선택해주세요<span class=\"txt_seat_s\">(화면을 내 구역을 직접 선택해주세요)</span>");
+    }
+
+}
+
+function bindBlockList(gradeObj, list, interlockTypeCode) {
+    var ulobj = $(gradeObj).next().find("ul");
+    ulobj.empty();
+    $.each(list, function(key, val) {
+        var liBlockId = "li"+$.escapeSelector(val.seatGradeNo+val.floorNo+val.areaNo);
+    	var realSeatCnt = 0;
+    	if($("#"+liBlockId).length > 0){
+    		realSeatCnt = $("#"+liBlockId).find('span').find('strong').html();
+    		realSeatCnt = parseInt(realSeatCnt.replaceAll(',',''));
+    		realSeatCnt = realSeatCnt + val.realSeatCntlk;
+    		$("#"+liBlockId).remove();
+    	}else{
+    		realSeatCnt = val.realSeatCntlk;
+    	}
+
+        var floorNo = (val.floorNo == null ? "" : val.floorNo);
+        var floorName = (val.floorNo == null ? "" : val.floorName);
+        var areaNo = (val.areaNo == null ? "" : val.areaNo);
+        var areaName = (val.areaNo == null ? "" : val.areaName);
+
+        var areaTit = floorNo.indexOf('EMPTY') > -1 || floorNo == '' ? '' : floorNo + ' '+ floorName;
+            areaTit += ( floorNo.indexOf('EMPTY') > -1 || floorNo == '' || val.areaNo.indexOf('EMPTY') > -1 || areaNo == '' ? '' : ' ');
+            areaTit += ( areaNo.indexOf('EMPTY') > -1 || areaNo == '' ? '' : areaNo + ' ' + areaName);
+
+        var blockobj = $("<li id='li"+ val.seatGradeNo+val.floorNo+val.areaNo +"' onclick=\"selectedBlock(this,'" + ZONE_BLOCK_ID["'"+val.sntv+"'"] + "','" + val.sntv + "','" + floorNo+ "','" + floorName+ "','" + areaNo+ "','" + areaName + "','" + val.blockTypeCode + "');\" onmouseover=\"viewGradeZone('" + val.sntv + "')\"  onmouseout=\"viewLastGradeZone()\" />").append("<span class=\"area_tit\" >" + areaTit +"</span>");
+        if ('IL0002' !=  interlockTypeCode && 'IL0003' !=  interlockTypeCode) {
+            blockobj.append("<span class=\"seat_residual\"> <strong>" + addComma(realSeatCnt) + "</strong>석</span>");
+        }
+        blockobj.appendTo(ulobj);
+    });
+    
+    $(gradeObj).children().toggleClass('open');
+    $(gradeObj).next().children().children().toggleClass('listOn');
+}
+
+function goSummary(gradeObj, gradeNo, sntvList) {
+    if(gradeObj == null || !$(gradeObj).next().children().children().hasClass('listOn')){
+        parent.$("#seatGradeNo").val(gradeNo);
+        SelectGradeZone(sntvList);
+        fnSetidxSelectedSeatBlockList(sntvList);
+
+        $.ajax({
+            type            : "POST"
+            , dataType      : "jsonp"
+            , cache         : true
+            , url           : "/tktapi/product/block/summary.json?v=1"
+            , async         : false
+            , data          : {
+                                prodId: parent.$("#prodId").val()
+                              , pocCode: parent.$("#pocCode").val()
+                              , scheduleNo: parent.$("#scheduleNo").val()
+                              , seatGradeNo: parent.$("#seatGradeNo").val()
+                              , corpCodeNo:getCookie('corpCodeNo')
+                              }
+            , jsonpCallback : "getBlockSummaryCallBack"
+            , success           : function(result) {
+                bindBlockList(gradeObj, result.summary, result.interlockTypeCode);
+                lastGrade = gradeNo;
+            }
+            , error             : function(e) {
+
+            }
+        });
+    }else{
+        $(gradeObj).children().toggleClass('open');
+        $(gradeObj).next().children().children().toggleClass('listOn');
+    }
+}
+
+function getBlockCount() {
+        $.ajax({
+            type            : "POST"
+            , dataType      : "jsonp"
+            , cache         : true
+            , url           : "/tktapi/product/block/summary.json?v=1"
+            , async         : false
+            , data          : {
+                                prodId: parent.$("#prodId").val()
+                              , pocCode: parent.$("#pocCode").val()
+                              , scheduleNo: parent.$("#scheduleNo").val()
+                              , seatGradeNo: ''
+                              , corpCodeNo:getCookie('corpCodeNo')
+                              }
+            , jsonpCallback: "getBlockSummaryCountCallBack"
+            , success           : function(result) {
+                var list = new List();
+                var map  = new Map();
+                var num_check=/^[0-9]*$/;
+                $.each(result.summary, function(key, val) {
+                    var seatCnt = 0;
+
+                    if(num_check.test(map.get(val.sntv))){
+                        seatCnt = map.get(val.sntv) + val.realSeatCntlk;
+                    }else{
+                        seatCnt = val.realSeatCntlk;
+                    }
+                    map.put(val.sntv,seatCnt);
+                    ZONE_BLOCK_TITLE["'"+val.sntv+"'"] = '잔여 ' + addComma(seatCnt) + '석'	;
+                });
+
+            }
+            , error             : function(e) {
+
+            }
+        });
+}
+
+
+function init() {
+	setLoading(true);
+	valiProductSchedule();
+    var params = parent.$("#sForm").serialize();
+    
+    $('#ez_canvas_zone').css('width', $(window).width()+'px');
+    $('#wrapper').css('width', $(window).width()+'px');
+
+    if (parent.$("#scheduleNo").val() != "") {
+    	$('#minimap-indicator').css('visibility', 'hidden');
+        $.ajax({
+            type            : "POST"
+            , dataType      : "jsonp"
+            , cache         : true
+            , url           : "/tktapi/product/summary.json?v=1"
+            , async         : false
+            , data          : {
+				                prodId: parent.$("#prodId").val()                
+				              , pocCode: parent.$("#pocCode").val()                
+				              , scheduleNo: parent.$("#scheduleNo").val()                
+				              , perfDate: parent.$("#perfDate").val()
+                              , corpCodeNo:getCookie('corpCodeNo')
+				              }
+            , jsonpCallback : "getBlockGradeSeatCountCallBack"
+            , success         : function(result) {
+				clipYn = result.clipYn;
+                bindSummaryList(result.summary);
+                drowAreaMap();
+                getBlockCount();
+                setLoading(false);
+            }
+            , error           : function(e) {
+            		setLoading(false);
+            		alert("다시 시도부탁드립니다.");
+            		location.reload(true);
+            }
+       });
+    }else{
+    	setLoading(false);
+    }
+}
+
+function init_suv() {
+	setLoading(true);
+	valiProductSchedule();
+    if (parent.$("#scheduleNo").val() != "") {
+        $.ajax({
+            type            : "POST"
+            , dataType      : "jsonp"
+            , cache         : true
+            , url           : "/tktapi/product/summary.json?v=1"
+            , async         : false
+            , data          : {
+				                prodId: parent.$("#prodId").val()                
+				              , pocCode: parent.$("#pocCode").val()                
+				              , scheduleNo: parent.$("#scheduleNo").val()                
+				              , perfDate: parent.$("#perfDate").val()
+                              , corpCodeNo:getCookie('corpCodeNo')
+				              }
+            , jsonpCallback : "getBlockGradeSeatCountCallBack"
+            , success         : function(result) {
+				clipYn = result.clipYn;
+				bindSummaryList(result.summary);
+				getBlockCount();
+				setLoading(false);
+            }
+            , error           : function(e) {
+	            	setLoading(false);
+	            	alert("다시 시도부탁드립니다.");
+            		location.reload(true);
+            }
+       });
+    }else{
+    		setLoading(false);
+    }
+	
+}
+
+function drowAreaMap(){
+	 $.ajax({
+         type            : "POST"
+         , dataType      : "jsonp"
+         , cache         : true
+         , url           : "/tktapi/product/getAreaMap.json?v=1"
+         , async         : false
+         , data          : {
+				                prodId: parent.$("#prodId").val()                
+				              , scheduleNo: parent.$("#scheduleNo").val()
+                              , pocCode: parent.$("#pocCode").val()
+				           }
+         , jsonpCallback : "getBlockGradeSeatMapCallBack"
+         , success         : function(result) {
+        	 
+        	 $('#ez_canvas_zone').css('width', $('.wrap_seat').width()+'px');
+             $('#scroller').css('width', $('.wrap_seat').width()+'px');
+             $('#wrapper').css('width', $('.wrap_seat').width()+'px');
+             $('#ez_canvas_zone').css('height', ($('.wrap_seat').height())+'px');
+             $('#scroller').css('height', ($('.wrap_seat').height())+'px');
+             $('#wrapper').css('height', ($('.wrap_seat').height())+'px');
+             $('#ez_canvas').css('width', $('.wrap_seat').width()+'px');
+             $('#ez_canvas').css('height', ($('.wrap_seat').height() - $('.box_stage').height() -10)+'px');
+             
+             fnLoadSeatMapZone(result.seatData);
+             
+             //PROD_ID = parent.prodData.prodId;
+             //SCH_ID = parent.prodData.scheduleNo;
+
+             fnLoadSeatMap(result.seatData, 0, true);
+             fniLoadSeatMap(result.seatData);
+         }
+         , error           : function(e) {
+         	setLoading(false);
+         },complete		  : function(e) {
+	        	if(parent.$("#stvn_view_list").val()!=""){
+	            	viewGradeZone(parent.$("#stvn_view_list").val());	
+	        }
+        }
+	 });
+}
+
+function valiProductSchedule(){
+	if (parent.$("#scheduleNo").val() != "") {
+        $.ajax({
+            type            : "POST"
+            , dataType      : "jsonp"
+            , cache         : true
+            , url           : "/tktapi_poc/performance/getProdSellState.json?v=1"
+            , async         : false
+            , data          : {
+				                prodId: parent.$("#prodId").val()                                
+				              , scheduleNo: parent.$("#scheduleNo").val()                
+				              }
+            , jsonpCallback : "getValiProductScheduleCallBack"
+            , success         : function(result) {
+            	
+				if(result.result==0){
+					//상품 판매 가능
+				}else{
+					//상품 판매 불가
+					alert("판매가능 상태가 아닙니다.");
+					parent.window.open("about:blank", "_self").close();
+				}
+            }
+            , error           : function(e) {
+            		setLoading(false);
+            }
+       });
+    }else{
+    		setLoading(false);
+    }
+}
+
+function bindScheduleList() {
+    var scheduleList        = $("#scheduleNo");
+    var scheduleNo          = parent.$("#scheduleNo").val();
+    var schtitle            = "";
+    var schDate             = "";
+    var schTime             = "";
+
+    scheduleList.empty();
+    $.each(parent.schData, function(key, val) {
+        schtitle                = "";
+        schDate                 = val.perfStartDay;
+        schTime                 = val.perfStartTime;
+
+        schtitle                = schDate.substr(0,4) + "." + schDate.substr(4,2) + "." + schDate.substr(6,2) + " (" + getWeekDay(schDate, "", "1") + ") ";
+        schtitle                += schTime.substr(0,2) + ":" + schTime.substr(2,2);
+
+        // ## 20181207 Ultra ##  (new add)
+        schtitle = parent.checkDateUnsettled(schDate, schTime, schtitle);
+
+        var schoption           = $("<option />").val(val.scheduleNo).text(schtitle);
+        if (scheduleNo == val.scheduleNo) {
+            schoption.attr({selected: "selected"});
+        }
+        
+        scheduleList.append(schoption);
+    });
+}
+
+function selectSchedule(scheduleNo) {
+    parent.$("#scheduleNo").val(scheduleNo);
+    parent.$("#stvn_view_list").val("");
+    parent.gradeData = {};
+    $.each(parent.schData, function(key, val) {
+        if (scheduleNo == val.scheduleNo) {
+            parent.$("#sellTypeCode").val(val.sellTypeCode);
+            parent.$("#sellCondNo").val(val.orderNo);
+        }
+    });
+    parent.$("#blockId").val("");
+    parent.reset();
+}
+
+$(function() {
+    parent.setProdSchedule();
+    
+    bindScheduleList();
+    $(".seat_block").show();
+    $("#ez_canvas").hide();
+    $(".box_stage").hide();
+
+    lastZone = null;
+    lastGrade = null;
+    parent.data.selectedSeatCount = 0;
+    loaded();
+    init();
+    
+    $("#nextTicketSelection").click(function(event) {
+        event.preventDefault();
+      	if (parent.data.selectedSeatCount > 0) goTicketType();
+    });
+    
+    $("#btnReloadSchedule").click(function(event) {
+    	if(confirmChangeBlock()){
+	        event.preventDefault();
+            if(lastZone == null){
+                init();
+                $('#gd'+lastGrade).click();
+            }else{
+            	init_suv();
+            	parent.data.selectedSeatCount = 0;
+                setSelectSeatCount(true);
+                getBlockSeatList();
+            }
+    	}
+    	myScroll.zoom(0);
+    	myScroll_minimap.zoom(0);
+    });
+    
+    $('#btn_map_m').click(function(event) {
+        event.preventDefault();
+        myScroll_minimap.zoom(myScroll_minimap.scale - zoomFactor_minimap);
+
+    });
+    $('#btn_map_p').click(function(event) {
+        event.preventDefault();
+        myScroll_minimap.zoom(myScroll_minimap.scale + zoomFactor_minimap);
+    });
+    
+    $("#viewAll").click(function(event) {
+    	if(confirmChangeBlock()){
+            event.preventDefault();
+            $(".view_seat").attr("style","position: relative");
+            $(".seat_block").show();
+            $("#ez_canvas").hide();
+            $(".box_stage").hide();
+            parent.data.selectedSeatCount = 0;
+            setSelectSeatCount(false);
+            lastZone = null;
+            init();
+            myScroll.zoom(0);
+            myScroll_minimap.zoom(0);
+        }
+    });
+
+    if (parent.$("#trafficCtrlYn").val() == "Y") {
+        //Netfunnel 명시적 완료처리
+        NetFunnel_aliveNotice(
+            {
+                ipblock: function(ev, ret) {
+                    return false;
+                },
+                block: function(ev,ret) {
+                    alert(ret.data.msg);
+                    return false;
+                }
+            }
+        );
+    }
+    
+});
+
+function getBlockSeatList() {
+    var params                  = parent.$("#sForm").serialize();
+    parent.data.seatdata        = {};
+    parent.seatData             = {};
+
+    lastZone = parent.$("#sntv").val();
+    var prodId		= parent.$("#prodId").val();
+    var scheduleNo	= parent.$("#scheduleNo").val();
+    var blockId		= parent.$("#blockId").val();
+    $.ajax({
+        type            : "POST"
+        , dataType      : "jsonp"
+        , cache         : true
+        , url           : "/tktapi/product/seat/seatMapList.json?v=1"
+        , async         : false
+        , data          : {
+                              prodId: prodId
+                            , scheduleNo: scheduleNo
+                            , blockId: blockId
+                            , pocCode: parent.$("#pocCode").val()
+                            , corpCodeNo: getCookie('corpCodeNo')
+				          }
+        , jsonpCallback: "getSeatListCallBack"
+        , success       : function(result) {
+        	if(result.code=="T9110"){
+        		alert(result.message);
+        		parent.self.close();
+        	}
+        	
+        	if(result.code=="T9217"){
+    			alert(result.message);
+    		}
+        	
+            seatData            = result.seatData;
+            
+            if(seatData != undefined ){
+                var bBlock = false;
+                if(seatData.mt == 'BLOCK'){
+                    bBlock = true;
+
+                    var floorNo = parent.$("#floorNo").val();
+                    var floorName = parent.$("#floorName").val();
+                    var areaNo = parent.$("#areaNo").val();
+                    var areaName = parent.$("#areaName").val();
+                    var area_str1 = floorNo.indexOf('EMPTY') > -1 || floorNo == '' ? '' : floorNo + ' ' + floorName;
+                    var area_str2 = areaNo.indexOf('EMPTY') > -1 || areaNo == ''  ? ''  : areaNo + ' ' + areaName;
+
+                    $('#minimap-indicator').css('visibility', 'hidden');
+                    $(".area").html(area_str1);
+                    $("#areaName").html(area_str2);
+                    parent.$("#floor_name").val("");
+                    $(".box_fix_info").show();
+                    $("#header").css('z-index', '1');
+                    $('.box_fix_info').css('z-index', '1');
+
+                }else{
+                    $('#minimap-indicator').css('visibility', 'visible');
+                    $(".box_fix_info").hide();
+                    $('.wrap_seat').removeClass('type4');
+                }
+                $('#ez_canvas').css('width', $('.wrap_seat').width()+'px');
+                $('#scroller').css('width', $('.wrap_seat').width()+'px');
+                $('#wrapper').css('width', $('.wrap_seat').width()+'px');
+                $('#ez_canvas').css('height', ($('.wrap_seat').height() - $('.box_stage').height() -10)+'px');
+                $('#scroller').css('height', ($('.wrap_seat').height() - $('.box_stage').height() -10)+'px');
+                $('#wrapper').css('height', ($('.wrap_seat').height() - $('.box_stage').height() -10)+'px');
+
+                fnLoadSeatMap(seatData, parent.lmt, bBlock);
+                if(bBlock){
+                    //PROD_ID = parent.prodData.prodId;
+                    //SCH_ID = parent.prodData.scheduleNo;
+                    fniLoadSeatMap(result.seatIdxData);
+                    viewLastGradeZone();
+
+                }
+
+                $("#partSeatSelected").empty();
+                parent.data.selectedSeatCount = 0;
+                setSelectSeatCount(true);
+
+                $(".seat_block").hide();
+                $("#ez_canvas").show();
+                $(".box_stage").show();
+            }
+        }
+        , error         : function(e) {
+        		setLoading(false);
+        		alert("다시 시도부탁드립니다.");
+        		location.reload(true);
+        }
+   });
+}
+
+function removeAllSelectedSeat(){
+    
+    selectedCount = 0;
+    parent.data.selectedSeatCount = selectedCount;
+    setSelectSeatCount(true);
+    
+    for( var i in parent.seatData){
+        var objectid     = "selectedSeat" + i;
+        $("#" + objectid).remove();
+        delete parent.seatData[i];
+        
+    }
+}
+
+function setProdSeat() {
+    $(".txt_prod_seat").empty();
+    $.each(parent.seatData, function(key, val) {
+        $(".txt_prod_seat").append(val.title + "<br>");
+    });
+}
+
+SeatInfo = function(id, grade, tit, st, csid, gn)
+{
+    this.sid 		= id;
+    this.grade 		= grade;
+    this.title 		= tit;
+    this.seatType 	= st;
+    this.csid 		= csid;
+    this.gn			= gn;
+}
+
+function selectSeat(sid, pSeatGrade, pSeatTitle, selectCount, pSeatTypeCode, pClipSeatId, pSeatGradeNm) {
+    var objectid     = "selectedSeat" + sid;
+    if ($("#"+objectid).get() == null || $("#"+objectid).get() == "") {
+        $("<li id=\"" + objectid + "\">").html(pSeatTitle +"<input type='hidden' name='seat_id' value='"+sid+"'/>").appendTo($("#partSeatSelected"));
+        parent.seatData[sid] = new SeatInfo(sid, pSeatGrade, pSeatTitle, pSeatTypeCode, pClipSeatId, pSeatGradeNm);
+        parent.$("#seatTypeCode").val(pSeatTypeCode);
+    }
+    parent.data.selectedSeatCount = selectCount;
+    setSelectSeatCount(true);
+}
+function unselectSeat(sid, selectCount){
+    var objectid     = "selectedSeat" + sid;
+    $("#" + objectid).remove();
+    delete parent.seatData[sid];
+    parent.data.selectedSeatCount = selectCount;
+    setSelectSeatCount(true);
+}
+
+function selectNASeat(sid, pSeatGrade, pSeatTitle, selectCount, pSeatTypeCode){
+    removeAllSelectedSeat();
+    var objectid     = "selectedSeat" + sid;
+    $("<li id=\"" + objectid + "\">").html("<input type='hidden' name='seat_id' value='"+sid+"'/>").appendTo($("#div_seat_selected"));
+    parent.seatData[sid]        = new SeatInfo(sid, pSeatGrade, pSeatTitle, pSeatTypeCode);
+    parent.$("#seatTypeCode").val(pSeatTypeCode);
+    parent.data.selectedSeatCount = 1;
+    goTicketType();
+}
+
+function setSelectSeatCount(bSeat) {
+    var selectCount         = parent.data.selectedSeatCount;
+    if(bSeat){
+	    if (selectCount > 0) {
+	        $("#txtSelectSeatInfo").html("선택한 좌석 총 <span class=\"txt_seat\">" + selectCount + "석</span>이 선택되었습니다.");
+	        $("#nextTicketSelection").parent().addClass("on");
+	    }
+	    else {
+	        $("#txtSelectSeatInfo").html("좌석을 선택해 주세요.");
+	        $("#nextTicketSelection").parent().removeClass("on");
+	    }
+    }else{
+    		if(clipYn != "Y"){
+        		$("#txtSelectSeatInfo").html("구역을 먼저 선택해주세요<span class=\"txt_seat_s\">(화면을 직접 선택하거나 우측 좌석등급을 선택해주세요)</span>");
+    		}else{
+    			$("#txtSelectSeatInfo").html("구역을 먼저 선택해주세요<span class=\"txt_seat_s\">(화면을 내 구역을 직접 선택해주세요)</span>");
+    		}
+        $("#nextTicketSelection").parent().removeClass("on");
+    }
+}
+
+function setLoading (isloading) {
+    paysync         = isloading;
+    if (isloading) {
+        loadingOpen(" ");
+    }
+    else {
+	    	setTimeout(function(){
+	        	loadingClose();
+	    }, 500);
+    }
+}
+
+function get_version_of_IE () { 
+
+	 var word; 
+	 var version = "N/A"; 
+
+	 var agent = navigator.userAgent.toLowerCase(); 
+	 var name = navigator.appName; 
+
+	 // IE old version ( IE 10 or Lower ) 
+	 if ( name == "Microsoft Internet Explorer" ) word = "msie "; 
+
+	 else { 
+		 // IE 11 
+		 if ( agent.search("trident") > -1 ) word = "trident/.*rv:"; 
+
+		 // Microsoft Edge  
+		 else if ( agent.search("edge/") > -1 ) word = "edge/"; 
+	 } 
+
+	 var reg = new RegExp( word + "([0-9]{1,})(\\.{0,}[0-9]{0,1})" ); 
+
+	 if (  reg.exec( agent ) != null  ) version = RegExp.$1 + RegExp.$2; 
+
+	 return version; 
+} 
+
+</script>
+

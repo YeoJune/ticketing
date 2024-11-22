@@ -47,18 +47,10 @@ function setupHandlers(browserManager, storeManager, { sites, ticketingFunctions
 
     // 취소 티켓팅을 위한 새로운 핸들러
     const cancelTicketingHandlers = {
-        'start-cancel-ticketing': async ({ siteId, params, accounts }) => {
+        'start-cancel-ticketing': async ({ siteId, params }) => {
             try {
-                const { cellWidth, cellHeight } = calculateGridSize(3);
-                mainWindow.setPosition(0, 0);
-                mainWindow.setSize(cellWidth, cellHeight);
-                
-                // 각 계정별로 취소 티켓팅 실행
-                for (const [index, account] of accounts.entries()) {
+                browserManager.instances.forEach(({ page }, index) => {
                     (async () => {
-                        const { page } = await browserManager.createBrowser(index);
-                        // 로그인 수행
-                        await loginFunctions[siteId](page, sites[siteId], account);
                         // 취소 티켓팅 시작
                         const result = await cancelTicketingFunctions[siteId](page, params);
                         // 결과를 프론트엔드로 전송
@@ -67,7 +59,7 @@ function setupHandlers(browserManager, storeManager, { sites, ticketingFunctions
                             success: result
                         });
                     })();
-                }
+                });
                 return true;
             } catch (error) {
                 console.error('Cancel ticketing execution failed:', error);

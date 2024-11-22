@@ -4,6 +4,7 @@ class App {
         this.accounts = [];
         this.currentSite = null;
         this.ticketingStatus = new Map(); // 티켓팅 상태 추적
+        this.successMessages = new Set(); // 성공 메시지 저장
         this.showView('siteView');
         this.setupEventListeners();
         this.loadSites();
@@ -145,15 +146,14 @@ class App {
             date: document.getElementById('cancelTargetDate').value,
             time: document.getElementById('cancelTargetTime').value,
             grade: document.getElementById('cancelGrade').value || null,
+            floor: document.getElementById('cancelFloor').value || null,
             startTime: document.getElementById('cancelStartTime').value,
             endTime: document.getElementById('cancelEndTime').value || null
         };
 
-        const selectedAccounts = this.getSelectedAccounts();
         await window.api.startCancelTicketing({
             siteId: this.currentSite,
-            params,
-            accounts: selectedAccounts
+            params
         });
     }
 
@@ -179,27 +179,84 @@ class App {
             document.getElementById(id).style.display = id === viewId ? 'block' : 'none';
         });
     }
+    startAlarm() {
+        const successSound = document.getElementById('successSound');
+        successSound.loop = true;
+        successSound.play().catch(e => console.log('알림음 재생 실패:', e));
+    }
+
+    stopAlarm() {
+        const successSound = document.getElementById('successSound');
+        successSound.pause();
+        successSound.currentTime = 0;
+    }
+
+    showSuccessModal() {
+        const modal = document.getElementById('successModal');
+        const messagesContainer = document.getElementById('successMessages');
+        
+        messagesContainer.innerHTML = Array.from(this.successMessages)
+            .map(message => `<div class="success-message">${message}</div>`)
+            .join('');
+        
+        modal.style.display = 'block';
+    }
+
+    closeSuccessModal() {
+        const modal = document.getElementById('successModal');
+        modal.style.display = 'none';
+        this.successMessages.clear();
+        this.stopAlarm();
+    }
 
     setupEventListeners() {
         document.getElementById('accountForm').onsubmit = e => this.addAccount(e);
         document.getElementById('executionForm').onsubmit = e => this.scheduleTicketing(e);
         document.getElementById('cancelTicketingForm').onsubmit = e => this.executeCancelTicketing(e);
-        document.getElementById('stopCancelTicketing').onclick = () => this.stopCancelTicketing();
+        document.getElementById('stopCancelTicketing').onclick = () => {
+            this.stopAlarm();
+            this.stopCancelTicketing();
+        };
 
-        // 취소 티켓팅 상태 리스너
+        // 취소표 티켓팅 상태 리스너
         window.api.onCancelTicketingStatus(({ accountIndex, success }) => {
             this.ticketingStatus.set(accountIndex, success ? 'SUCCESS' : 'RUNNING');
             this.renderTicketingStatus();
             
             if (success) {
-                alert(`계정 ${accountIndex + 1}번이 티켓팅에 성공했습니다!`);
-                this.stopCancelTicketing();
+                // 성공 메시지 추가
+                this.successMessages.add(`계정 ${accountIndex + 1}번이 티켓팅에 성공했습니다!`);
+                
+                // 알람이 아직 재생 중이 아니면 시작
+                const successSound = document.getElementById('successSound');
+                if (successSound.paused) {
+                    this.startAlarm();
+                }
+                
+                // 모달 표시
+                this.showSuccessModal();
             }
         });
 
         window.api.onCancelTicketingStopped(() => {
+            this.stopAlarm();
             document.getElementById('stopCancelTicketing').style.display = 'none';
+            this.successMessages.clear();
         });
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                this.closeSuccessModal();
+            }
+        });
+
+        // 모달 외부 클릭으로 닫기
+        document.getElementById('successModal').onclick = (event) => {
+            if (event.target.id === 'successModal') {
+                this.closeSuccessModal();
+            }
+        };
     }
 
     renderTicketingStatus() {

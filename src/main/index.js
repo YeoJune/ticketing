@@ -1,7 +1,7 @@
 // index.js
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const sites = require('./config/sites');
+const sites = require('./sites/index');
 const BrowserManager = require('./core/browser');
 const StoreManager = require('./core/store');
 const setupHandlers = require('./handlers');

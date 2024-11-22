@@ -9,6 +9,9 @@
         }
     </style>
     <link rel="stylesheet" href="./styles/styles.css">
+    <audio id="successSound" loop>
+        <source src="./alarm.mp3" type="audio/mpeg">
+    </audio>
 </head>
 <body>
     <!-- 사이트 선택 화면 -->
@@ -36,7 +39,7 @@
         </div>
         <div class="execution-buttons">
             <button onclick="app.startTicketing()">티켓팅 실행</button>
-            <button onclick="app.startCancelTicketing()">취소 티켓팅 실행</button>
+            <button onclick="app.startCancelTicketing()">취소표 티켓팅 실행</button>
         </div>
     </div>
 
@@ -44,7 +47,7 @@
      
     <div id="executionView" class="view">
         <div class="view-header">
-            <h2>실행 설정</h2>
+            <h2>티켓팅 설정</h2>
             <button class="back-button" onclick="app.goBack('accountView')">
                 <span class="arrow">←</span> 계정 관리로
             </button>
@@ -71,6 +74,8 @@
                     <option value="R">R</option>
                     <option value="S">S</option>
                     <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
                     <option value="SR">SR</option>
                     <option value="스탠딩">스탠딩석</option>
                     <option value="지정">지정석</option>
@@ -92,7 +97,7 @@
     </div>
     <div id="cancelTicketingView" class="view">
         <div class="view-header">
-            <h2>취소 티켓팅 설정</h2>
+            <h2>취소표 티켓팅 설정</h2>
             <button class="back-button" onclick="app.goBack('accountView')">
                 <span class="arrow">←</span> 계정 관리로
             </button>
@@ -119,12 +124,19 @@
                     <option value="R">R</option>
                     <option value="S">S</option>
                     <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
                     <option value="SR">SR</option>
                     <option value="스탠딩">스탠딩석</option>
                     <option value="지정">지정석</option>
                 </select>
             </div>
             
+            <div class="form-group">
+                <input type="number" id="cancelFloor" placeholder="층 선택 (선택사항)" min="1" max="5">
+                <div class="input-hint">1층~5층 사이의 숫자를 입력해주세요</div>
+            </div>
+
             <div class="form-group">
                 <input type="datetime-local" id="cancelStartTime" required>
                 <div class="input-hint">매크로 실행 시작 시각을 선택해주세요</div>
@@ -139,6 +151,14 @@
             <button type="button" id="stopCancelTicketing" style="display: none;">중지하기</button>
             <div id="ticketingStatus" class="status-container"></div>
         </form>
+    </div>
+    
+    <div id="successModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>티켓팅 성공!</h3>
+            <div id="successMessages"></div>
+            <button onclick="app.closeSuccessModal()">확인</button>
+        </div>
     </div>
 
     <script src="script.js"></script>

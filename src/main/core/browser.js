@@ -5,7 +5,7 @@ const { calculateGridSize, calculateWindowPos } = require('../../utils');
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36';
 
-process.env.NODE_ENV = 'development';
+//process.env.NODE_ENV = 'development';
 
 // Chromium 실행 경로 설정 함수
 function getChromiumExecPath() {
@@ -33,6 +33,7 @@ class BrowserManager {
     async createBrowser(position) {
         const { cellWidth, cellHeight } = calculateGridSize(3);
         const { posX, posY } = calculateWindowPos(position);
+
         const browser = await puppeteer.launch({
             headless: false,
             executablePath: getChromiumExecPath(),
@@ -42,6 +43,7 @@ class BrowserManager {
                 `--window-size=${cellWidth},${cellHeight}`,
         
                 // 핵심 성능 설정
+                '--no-user-data-dir',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
